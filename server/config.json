@@ -1,0 +1,29 @@
+{
+    "access": {
+      "vk": {
+        "tokens": {
+          "standalone": "af34016afcc4056c0afe1232c8bab29db7c505fcbb124ddd220d4c138b581a2bac4cfe086a1c5a5d1ee8f",
+          "photos": "8e49c8288a9bc71665208134180cd378c4f31071cb56ee0a14c853340fe4602ca0dfee4b3293f9c307b3a"
+        },
+        "group": "161792842"
+      }
+    },
+    "utm": {
+      "vk": "&utm_campaign=anomaly&utm_source=vkontakte&utm_medium=social"
+    },
+    "post_preventions": {
+      "preventMaxPrice": 15000,
+      "preventMaxDays": 60,
+      "preventLastPostDiff": 240,
+      "preventCachedDirections": 604800
+    },
+    "history": {
+      "lastPostTimestamp": {
+        "vk": 1570733212
+      }
+    },
+    "misc": {
+      "momentFormat": "YYYY-MM-DD HH:mm:ss",
+      "domainForRequests": "localhost:3000"
+    }
+  }

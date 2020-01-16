@@ -1,0 +1,45 @@
+doctype html
+html
+    head
+        link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/normalize-css@2.3.1/normalize.min.css')
+        link(rel='stylesheet' href='https://fonts.googleapis.com/css?family=Rubik:300,400,500')
+        link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css')
+        link(rel='stylesheet' href='/static/css/fonts.css?' + now)
+        link(rel='stylesheet' href='/static/css/style.css?' + now)
+    body(style='background-image: url('+anomalyData.imageSrc+')')
+        - var onewayVal = anomalyData.segments.length === 1
+        if weatherText
+            .weather-holder
+                i.fas.fa-sun
+                span #{weatherText}
+        .content
+            .main-content
+                .city-names
+                    .city.from #{anomalyData.segments[0].origin.name}
+                    - var emojiVal = onewayVal === true ? '→' : '⇄'
+                    .arrow #{emojiVal}
+                    .city.to #{anomalyData.segments[0].destination.name}
+                .ticket-body
+                    .left-side
+                        each flight, index in anomalyData.segments
+                            - var dateLabel = index === 0 ? 'Туда' : 'Обратно'
+                            .date
+                                i.fas.fa-calendar-alt
+                                .date-label #{flight.departure.format}
+                                .way-label #{dateLabel}
+                        - var stopsLabels = ['Прямой', '1 пересадка', '2 пересадки']
+                        - var stopsColors = ['#8bc34a', '#fbc02d', '#f44336']
+                        .flight-stops
+                            i.fas.fa-arrow-alt-circle-right(style='color:'+stopsColors[anomalyData.segments[0].stops.length])
+                            .stops-label #{stopsLabels[anomalyData.segments[0].stops.length]}
+                            .way-label Рейс
+                    .right-side
+                        .airline
+                                img(src='//pics.avs.io/240/60/'+anomalyData.airline+'@2x.webp')
+                        .price
+                            | #{anomalyData.price}
+                            i(class=currencyClass)
+                        - var directionLabel = onewayVal === true ? 'В одну сторону' : 'Туда и обратно'
+                        .oneway-holder #{directionLabel}
+        script
+            | window.anomalyData = !{JSON.stringify(anomalyData)}
