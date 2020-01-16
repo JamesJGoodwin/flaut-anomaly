@@ -9,7 +9,6 @@ import path from 'path'
 import Redis from 'ioredis'
 import dotenv from 'dotenv'
 import moment from 'moment'
-import tunnel from 'tunnel'
 import readline from 'readline'
 import puppeteer from 'puppeteer'
 
@@ -33,63 +32,7 @@ import { genText, vk as createVkPost } from './vk'
 /**
  * Logic
  */
-const proxyAddrs = fs.readFileSync(path.join(__dirname, '../../proxies.txt'), { encoding: 'utf8' }).split('\r\n')
-
-function checkProxy(addr: string): Promise<{ valid: boolean; proxy: string }> {
-    return new Promise(resolve => {
-        setTimeout(() => resolve({ valid: false, proxy: addr }), 6000)
-
-        got('https://m.vk.com/', {
-            agent: tunnel.httpOverHttp({
-                proxy: {
-                    host: addr.split(':')[0],
-                    port: parseInt(addr.split(':')[1])
-                }
-            }),
-            timeout: 5000
-        })
-            .then(res => {
-                if (res.statusCode === 200) {
-                    resolve({ valid: true, proxy: addr })
-                } else resolve({ valid: false, proxy: addr })
-            })
-            .catch(() => resolve({ valid: false, proxy: addr }))
-    })
-}
-
 ;(async () => {
-    try {
-        console.log('[VK] Checking availability of vk.com...')
-        await got('https://m.vk.com/')
-    } catch (e) {
-        if (e.code === 'ECONNREFUSED') {
-            console.log('[VK] vk.com is unavailable, searching for a working proxy...')
-
-            const promises = []
-
-            for (let i = 0; i < proxyAddrs.length; i++) {
-                promises.push(checkProxy(proxyAddrs[i]))
-            }
-
-            const res = await Promise.all(promises)
-
-            for (let i = 0; i < res.length; i++) {
-                if (res[i].valid === true) {
-                    console.log(`[VK] Found working proxy address: ${res[i].proxy}`)
-                    process.env.PROXY_ADDR = res[i].proxy
-                    break
-                }
-            }
-        } else {
-            return console.error(e)
-        }
-    }
-
-    if ('PROXY_ADDR' in process.env === false) {
-        console.log('\x1b[31m%s\x1b[0m', '[VK] No proxy was found to access vk.com, exiting...')
-        process.exit(1)
-    }
-
     const facebookAppstateCacheKey = 'facebook_appstate'
     const appstate: string | null = await redis.get(facebookAppstateCacheKey)
 
@@ -168,18 +111,12 @@ function checkProxy(addr: string): Promise<{ valid: boolean; proxy: string }> {
              * Parse route and dates
              */
             var preventSplitStrings = ticketLink.split('_')
-            var preventPrice = preventSplitStrings[2]
+            var preventPrice = parseInt(preventSplitStrings[2])
             var preventSegments = preventSplitStrings[0]
                 .split(preventSplitStrings[0].substring(0, 2))[1]
                 .match(/([0-9]{26}[A-Z]+)/g)
             var preventDepartureDate = preventSegments[0].substring(0, 10)
             var preventCities = preventSegments[0].match(/[A-Z]{3}/g)
-
-            try {
-                let testPrevent = preventCities[0]
-            } catch (e) {
-                console.error(preventCities, ticketLink, e)
-            }
             /**
              * If date is too far
              */
@@ -196,7 +133,7 @@ function checkProxy(addr: string): Promise<{ valid: boolean; proxy: string }> {
             /**
              * Если цена билета слишком большая (см config.json)
              */
-            if (preventPrice > process.env.POST_PREVENT_MAX_PRICE) {
+            if (preventPrice > parseInt(process.env.POST_PREVENT_MAX_PRICE)) {
                 return console.log(
                     `[Anomaly][${preventCities[0]}-${preventCities[preventCities.length - 1]}] Price is higher than ${
                         process.env.POST_PREVENT_MAX_PRICE
@@ -235,7 +172,7 @@ function checkProxy(addr: string): Promise<{ valid: boolean; proxy: string }> {
             /**
              * Если цена билета с учётом скидки больше, чем средняя цена по месяцу
              */
-            if (parseInt(preventPrice) > preventAvgPrice) {
+            if (preventPrice > preventAvgPrice) {
                 return console.log(
                     `[Anomaly][${preventCities[0]}-${
                         preventCities[preventCities.length - 1]
@@ -250,6 +187,13 @@ function checkProxy(addr: string): Promise<{ valid: boolean; proxy: string }> {
             try {
                 var screenshot = await getAnomalyPicture(browser, ticketLink)
             } catch (e) {
+                if (e.message.includes('Both image download methods failed')) {
+                    return console.log(
+                        `[${preventCities[0]}-${
+                            preventCities[preventCities.length - 1]
+                        }] Both image download methods failed`
+                    )
+                }
                 return console.error(e)
             } finally {
                 await browser.close()
