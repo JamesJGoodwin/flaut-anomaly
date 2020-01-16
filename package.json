@@ -8,7 +8,7 @@
     "watch-server": "tsc --watch --project ./server/tsconfig.json",
     "watch-node": "nodemon --watch ./server/build/ --watch ./server/anomaly.pug",
     "start-anomaly": "node ./server/build/anomaly/index.js",
-    "build:pre": "rimraf server",
+    "build:pre": "rimraf server/build",
     "build": "run-s build:pre build:server",
     "build:server": "tsc --project ./server/tsconfig.json"
   },
@@ -20,7 +20,6 @@
     "@types/node": "^13.1.7",
     "@types/pug": "^2.0.4",
     "@types/puppeteer": "^2.0.0",
-    "@types/tunnel": "0.0.1",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
     "eslint": "^6.8.0",
@@ -43,7 +42,6 @@
     "pug": "^2.0.4",
     "puppeteer": "github:puppeteer/puppeteer#master",
     "srcset": "^2.0.1",
-    "tunnel": "0.0.6",
     "url": "^0.11.0"
   }
 }

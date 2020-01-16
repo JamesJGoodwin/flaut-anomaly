@@ -16,7 +16,6 @@ import path from 'path'
 import Redis from 'ioredis'
 import dotenv from 'dotenv'
 import moment from 'moment'
-import tunnel from 'tunnel'
 import FormData from 'form-data'
 
 dotenv.config()
@@ -57,17 +56,7 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
      */
     try {
         var photoUpload: GetWallUploadServerResponse = await got(
-            `https://api.vk.com/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=8.85`,
-            'PROXY_ADDR' in process.env
-                ? {
-                      agent: tunnel.httpOverHttp({
-                          proxy: {
-                              host: process.env.PROXY_ADDR.split(':')[0],
-                              port: parseInt(process.env.PROXY_ADDR.split(':')[1])
-                          }
-                      })
-                  }
-                : {}
+            `https://api.vk.com/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=8.85`
         ).json()
     } catch (e) {
         throw new Error(e)
@@ -103,17 +92,7 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
      */
     try {
         var imagePostDataResponse: SaveWallPhotoResponse = await got(
-            `https://api.vk.com/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=8.85`,
-            'PROXY_ADDR' in process.env
-                ? {
-                      agent: tunnel.httpOverHttp({
-                          proxy: {
-                              host: process.env.PROXY_ADDR.split(':')[0],
-                              port: parseInt(process.env.PROXY_ADDR.split(':')[1])
-                          }
-                      })
-                  }
-                : {}
+            `https://api.vk.com/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=8.85`
         ).json()
     } catch (e) {
         throw new Error(`[VK] Failed to fetch photos.saveWallPhoto: ${e}`)
@@ -141,17 +120,7 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
                         text.text + '\n\nЗабронировать: ' + shortened + '\n\n'
                     )}&attachments=photo${imagePostDataResponse.response[0].owner_id}_${
                         imagePostDataResponse.response[0].id
-                    }&access_token=${process.env.VK_TOKEN_STANDALONE}&v=8.85)`,
-                    'PROXY_ADDR' in process.env
-                        ? {
-                              agent: tunnel.httpOverHttp({
-                                  proxy: {
-                                      host: process.env.PROXY_ADDR.split(':')[0],
-                                      port: parseInt(process.env.PROXY_ADDR.split(':')[1])
-                                  }
-                              })
-                          }
-                        : {}
+                    }&access_token=${process.env.VK_TOKEN_STANDALONE}&v=8.85)`
                 )
             } catch (e) {
                 throw new Error(e)
@@ -174,7 +143,7 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
     }
 }
 
-export function genText(anomaly: TicketParser, t: string, p: string) {
+export function genText(anomaly: TicketParser, t: string, p: number) {
     for (let i = 0; i < anomaly.segments.length; i++) {
         for (let j in cases) {
             if (j === anomaly.segments[i].origin.city_code) {
