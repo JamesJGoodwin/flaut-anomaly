@@ -104,9 +104,7 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
     /**
      * Делаем пост на стене группы
      */
-    const directionKey = `${screenshot.anomalyData.segments[0].origin.code}_${
-        screenshot.anomalyData.segments[screenshot.anomalyData.segments.length - 1].destination.code
-    }`
+    const directionKey = `${screenshot.anomalyData.segments[0].origin.code}_${screenshot.anomalyData.segments[0].destination.code}`
     const direction: string | null = await redis.get(directionKey)
     const cached: string | null = await redis.get('lastVkPost')
 
@@ -130,10 +128,8 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
             await redis.set(directionKey, 1, 'EX', parseInt(process.env.POST_PREVENT_CACHED_DIRECTIONS))
 
             console.log(
-                '\x1b[32m%s\x1b[0m',
-                `[VK][${screenshot.anomalyData.segments[0].origin.code}-${
-                    screenshot.anomalyData.segments[screenshot.anomalyData.segments.length - 1].destination.code
-                }] Posted!`
+                `[Anomaly][${screenshot.anomalyData.segments[0].origin.code}-${screenshot.anomalyData.segments[0].destination.code}] \x1b[32m%s\x1b[0m`,
+                'Posted!'
             )
         } else {
             console.log('[VK] Posting forbidden due to direction duplicate')
