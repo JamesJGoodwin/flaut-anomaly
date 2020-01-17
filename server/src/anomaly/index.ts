@@ -74,12 +74,14 @@ import { genText, vk as createVkPost } from './vk'
              * Автоматическое удаление файлов
              */
             fs.readdirSync(path.join(__dirname, '../../../images/')).forEach(val => {
-                const file = path.join(__dirname, '../../../images/' + val)
-                const mtime = fs.statSync(file).mtime
+                if (val.endsWith('.png')) {
+                    const file = path.join(__dirname, '../../../images/' + val)
+                    const mtime = fs.statSync(file).mtime
 
-                if (Math.round(new Date().valueOf() / 1000) - Math.round(mtime.valueOf() / 1000) > 3600) {
-                    fs.unlinkSync(file)
-                    console.log(`[GC] File ${val} has been deleted automatically`)
+                    if (Math.round(new Date().valueOf() / 1000) - Math.round(mtime.valueOf() / 1000) > 3600) {
+                        fs.unlinkSync(file)
+                        console.log(`[GC] File ${val} has been deleted automatically`)
+                    }
                 }
             })
 
