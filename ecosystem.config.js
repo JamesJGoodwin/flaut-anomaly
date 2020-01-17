@@ -3,7 +3,7 @@ module.exports = {
         {
             name: 'Anomaly',
             script: './server/build/anomaly/index.js',
-            watch: ['server/build/anomaly'],
+            watch: false,
             env: {
                 NODE_ENV: 'production'
             }
@@ -11,7 +11,7 @@ module.exports = {
         {
             name: 'ExpressJS Anomaly',
             script: './server/build/index.js',
-            watch: ['server/build'],
+            watch: false,
             env: {
                 NODE_ENV: 'production'
             }
