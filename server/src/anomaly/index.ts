@@ -112,13 +112,18 @@ import { genText, vk as createVkPost } from './vk'
             /**
              * Parse route and dates
              */
-            var preventSplitStrings = ticketLink.split('_')
-            var preventPrice = parseInt(preventSplitStrings[2])
-            var preventSegments = preventSplitStrings[0]
-                .split(preventSplitStrings[0].substring(0, 2))[1]
-                .match(/([0-9]{26}[A-Z]+)/g)
-            var preventDepartureDate = preventSegments[0].substring(0, 10)
-            var preventCities = preventSegments[0].match(/[A-Z]{3}/g)
+            try {
+                var preventSplitStrings = ticketLink.split('_')
+                var preventPrice = parseInt(preventSplitStrings[2])
+                var preventSegments = preventSplitStrings[0]
+                    .split(preventSplitStrings[0].substring(0, 2))[1]
+                    .match(/([0-9]{26}[A-Z]+)/g)
+                var preventDepartureDate = preventSegments[0].substring(0, 10)
+                var preventCities = preventSegments[0].match(/[A-Z]{3}/g)
+            } catch (e) {
+                console.log(ticketLink)
+                console.error(e)
+            }
             /**
              * If date is too far
              */

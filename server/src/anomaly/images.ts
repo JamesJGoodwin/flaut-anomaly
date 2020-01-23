@@ -27,12 +27,19 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
 
     const page = (await browser.pages())[0]
 
+    process.on('unhandledRejection', (reason, p) => {
+        console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+        browser.close()
+    })
+
+    const url = `https://pixabay.com/photos/search/${keyword}/?cat=buildings&orientation=horizontal`
+
     /**
      * Переходим из личного кабинета в поисковую выдачу
      */
 
-    await page.goto(`https://pixabay.com/photos/search/${keyword}/?cat=buildings&orientation=horizontal`, {
-        waitUntil: 'networkidle0'
+    await page.goto(url, {
+        waitUntil: 'domcontentloaded'
     })
 
     /**
@@ -61,7 +68,7 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
          * Загружаем картинку с информацией об изображении
          */
 
-        await page.goto(`https://pixabay.com/${pageHref}`, { waitUntil: 'networkidle0' })
+        await page.goto(`https://pixabay.com/${pageHref}`, { waitUntil: 'domcontentloaded' })
 
         /**
          * Выбираем ссылку на изображение
@@ -77,8 +84,10 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
 
         const sorted = srcSet.sort((a, b) => b.density - a.density)
         return { image: sorted[0].url }
+    } else {
+        console.log(`[Pixabay] Failed to fetch image from ${url}`)
+        return { image: null }
     }
-    return { image: null }
 }
 
 export async function getPexelsImage(keyword: string, debug = false): Promise<{ image: string | null }> {
@@ -92,7 +101,12 @@ export async function getPexelsImage(keyword: string, debug = false): Promise<{ 
 
     const page = (await browser.pages())[0]
 
-    await page.goto(`https://www.pexels.com/search/${keyword}`, { waitUntil: 'networkidle0' })
+    process.on('unhandledRejection', (reason, p) => {
+        console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
+        browser.close()
+    })
+
+    await page.goto(`https://www.pexels.com/search/${keyword}`, { waitUntil: 'domcontentloaded' })
 
     /**
      * Если на странице есть картинки - выбрать любую случайным образом
