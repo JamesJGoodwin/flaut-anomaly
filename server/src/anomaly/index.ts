@@ -189,7 +189,12 @@ import { genText, vk as createVkPost } from './vk'
             /**
              * Запускаем Puppeteer и начинаем рендеринг изображения со страницы
              */
-            const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
+            try {
+                var browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
+            } catch (e) {
+                console.error('Failed to launch browser: ', e)
+                browser.close()
+            }
 
             try {
                 var screenshot = await getAnomalyPicture(browser, ticketLink)
