@@ -205,8 +205,11 @@ import { genText, vk as createVkPost } from './vk'
                             preventCities[preventCities.length - 1]
                         }] Both image download methods failed`
                     )
+                } else if (e.message.includes('no image available for keyword')) {
+                    return console.log(`[${preventCities[0]}-${preventCities[preventCities.length - 1]}] ${e.message}`)
+                } else {
+                    return console.error(e)
                 }
-                return console.error(e)
             } finally {
                 await browser.close()
             }

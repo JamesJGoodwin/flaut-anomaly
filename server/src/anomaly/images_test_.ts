@@ -12,6 +12,6 @@ import { getPixabayImage, getPexelsImage } from './images'
  * Logic
  */
 ;(async (): Promise<void> => {
-    console.log(await getPixabayImage('Kazan', true))
-    console.log(await getPexelsImage('Moscow', true))
+    console.log(await getPixabayImage('Kaliningrad'))
+    console.log(await getPexelsImage('Kaliningrad'))
 })()
