@@ -32,7 +32,7 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
         browser.close()
     })
 
-    const url = `https://pixabay.com/photos/search/${keyword}/?cat=buildings&orientation=horizontal`
+    const url = `https://safesearch.pixabay.com/photos/search/${keyword}/?cat=buildings&orientation=horizontal`
 
     /**
      * Переходим из личного кабинета в поисковую выдачу
@@ -68,7 +68,7 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
          * Загружаем картинку с информацией об изображении
          */
 
-        await page.goto(`https://pixabay.com/${pageHref}`, { waitUntil: 'domcontentloaded' })
+        await page.goto(`https://safesearch.pixabay.com/${pageHref}`, { waitUntil: 'domcontentloaded' })
 
         /**
          * Выбираем ссылку на изображение
