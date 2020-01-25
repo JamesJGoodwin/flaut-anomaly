@@ -27,6 +27,11 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
 
     const page = (await browser.pages())[0]
 
+    await page.setViewport({ width: 1920, height: 1080 })
+    await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
+    )
+
     process.on('unhandledRejection', (reason, p) => {
         console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
         browser.close()
@@ -38,9 +43,14 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
      * Переходим из личного кабинета в поисковую выдачу
      */
 
-    await page.goto(url, {
+    const res = await page.goto(url, {
         waitUntil: 'domcontentloaded'
     })
+
+    if ((await res.text()).includes('Please complete the security check to access')) {
+        console.error(`Failed to fetch image for keyword ${keyword}. Reason: blocked by CloudFlare`)
+        return { image: null }
+    }
 
     /**
      * Если на странице есть картинки - выбрать любую случайным образом

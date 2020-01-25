@@ -66,17 +66,6 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
             return { code: 500, headers: {}, body: 'An error occured while parsing ?t query' }
         }
 
-        const prevImageResultKey = 'anomaly_image_' + anomalyData.data.imageKeyword
-        const isNoImageForKeyword = (await redis.get(prevImageResultKey)) === null
-
-        if (isNoImageForKeyword) {
-            return {
-                code: 500,
-                headers: {},
-                body: 'Warning: no image available for keyword ' + anomalyData.data.imageKeyword
-            }
-        }
-
         for (let i = 0; i < anomalyData.data.segments.length; i++) {
             anomalyData.data.segments[i].departure.format = moment
                 .unix(anomalyData.data.segments[i].departure.timestamp)
@@ -110,7 +99,6 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
             }
 
             if ('imageSrc' in anomalyData.data === false || anomalyData.data.imageSrc === null) {
-                await redis.set(prevImageResultKey, '1', 'EX', 86400 * 30)
                 return { code: 500, headers: {}, body: 'Both image download methods failed' }
             }
 
