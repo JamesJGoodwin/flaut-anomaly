@@ -27,6 +27,11 @@ const citiesIndexedData: IndexedCities = {
     for (let i = 0; i < cities.length; i++) {
         if (cities[i].name !== null && cities[i].coordinates !== null) {
             citiesIndexedData.codeIndexed[cities[i].code] = cities[i]
+
+            if (cities[i].code === 'AER') {
+                citiesIndexedData.codeIndexed[cities[i].code].name_translations.en = 'Sochi'
+            }
+
             citiesIndexedData.codeIndexed[cities[i].code].page_id = toPageId(cities[i].name_translations.en)
         }
     }
