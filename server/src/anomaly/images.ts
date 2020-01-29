@@ -37,7 +37,9 @@ export async function getPixabayImage(keyword: string, debug = false): Promise<{
         browser.close()
     })
 
-    const url = `https://safesearch.pixabay.com/photos/search/${keyword}/?cat=buildings&orientation=horizontal`
+    const url = `https://safesearch.pixabay.com/photos/search/${keyword
+        .replace(/\/g/, '%20')
+        .replace(/\s/g, '%20')}/?cat=buildings&orientation=horizontal`
 
     /**
      * Переходим из личного кабинета в поисковую выдачу
@@ -116,7 +118,9 @@ export async function getPexelsImage(keyword: string, debug = false): Promise<{ 
         browser.close()
     })
 
-    await page.goto(`https://www.pexels.com/search/${keyword}`, { waitUntil: 'domcontentloaded' })
+    await page.goto(`https://www.pexels.com/search/${keyword.replace(/\/g/, '%20').replace(/\s/g, '%20')}`, {
+        waitUntil: 'domcontentloaded'
+    })
 
     /**
      * Если на странице есть картинки - выбрать любую случайным образом
