@@ -91,20 +91,37 @@ import { genText, vk as createVkPost } from './vk'
                 return console.log('Message declined due to recent activity')
             }
 
-            var ticketLink = ''
+            let ticketLink = ''
 
             try {
                 for (const callToAction of event.attachments[0].target.call_to_actions) {
                     if (callToAction.title === 'Показать билет') {
-                        const actionLink = callToAction.action_link
-                        const aviasalesLink = url.parse(actionLink).search
-                        ticketLink = url
-                            .parse(decodeURIComponent(aviasalesLink).split('?u=')[1])
-                            .query.split('t=')[1]
-                            .split('&')[0]
+                        let aviasalesTracker = ''
+
+                        for (const [k, v] of new URLSearchParams(url.parse(callToAction.action_link).search)) {
+                            if (k === 'u') aviasalesTracker = v
+                        }
+
+                        const { headers, ...res } = await got(aviasalesTracker, {
+                            followRedirect: false,
+                            headers: {
+                                'user-agent': `Hello, Aviasales developers. I am friendly bot from Flaut.ru. Please don't block me, okay?`
+                            }
+                        })
+
+                        if (!headers.location.startsWith('https://hydra.aviasales.ru')) {
+                            return console.error(
+                                `Failed to parse URL from tracker; Code: ${res.statusCode}, headers: ${headers}`
+                            )
+                        }
+
+                        for (const [k, v] of new URLSearchParams(url.parse(headers.location).search)) {
+                            if (k === 't') ticketLink = v
+                        }
                     }
                 }
             } catch (e) {
+                console.error(e)
                 return
             }
 
@@ -121,7 +138,7 @@ import { genText, vk as createVkPost } from './vk'
                 var preventDepartureDate = preventSegments[0].substring(0, 10)
                 var preventCities = preventSegments[0].match(/[A-Z]{3}/g)
             } catch (e) {
-                console.log(ticketLink)
+                console.log('ticketLink: ' + ticketLink)
                 console.error(e)
             }
             /**
