@@ -35,7 +35,7 @@
     "express": "^4.17.1",
     "facebook-chat-api": "github:Schmavery/facebook-chat-api",
     "form-data": "^3.0.0",
-    "got": "^10.3.0",
+    "got": "^10.5.7",
     "ioredis": "^4.14.1",
     "moment": "^2.24.0",
     "nodemon": "^2.0.2",
