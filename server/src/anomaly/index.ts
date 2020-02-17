@@ -87,9 +87,7 @@ import { genText, vk as createVkPost } from './vk'
 
             const lastVkPost: string | null = await redis.get('lastVkPost')
 
-            if (lastVkPost !== null) {
-                return console.log('Message declined due to recent activity')
-            }
+            if (lastVkPost !== null) return
 
             let ticketLink = ''
 
