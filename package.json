@@ -40,7 +40,7 @@
     "moment": "^2.24.0",
     "nodemon": "^2.0.2",
     "pug": "^2.0.4",
-    "puppeteer": "github:puppeteer/puppeteer#master",
+    "puppeteer": "^2.1.1",
     "srcset": "^2.0.1",
     "url": "^0.11.0"
   }
