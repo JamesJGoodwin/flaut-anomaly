@@ -131,7 +131,11 @@ export async function vk(text: { text: string; link: string }, screenshot: Anoma
                 `[Anomaly][${screenshot.anomalyData.segments[0].origin.code}-${screenshot.anomalyData.segments[0].destination.code}] \x1b[32m%s\x1b[0m`,
                 'Posted!'
             )
+        } else {
+            console.log('[VK] Posting forbidden due to direction duplicate')
         }
+    } else {
+        console.log('[VK] Posting forbidden due to recent activity')
     }
 }
 
