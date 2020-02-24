@@ -51,22 +51,15 @@ app.get('/webhook', (req, res) => {
     let challenge = req.query['hub.challenge']
 
     if (mode && token) {
-        if (mode === 'subscribe' && token === process.env.FACEBOOK_VERIFY_TOKEN) {
-            return res.send(challenge)
-        }
+        if (mode === 'subscribe' && token === process.env.FACEBOOK_VERIFY_TOKEN) res.send(challenge)
+        else res.status(403).end()
     }
-
-    return res.status(403).end()
 })
 
 app.post('/webhook', (req, res) => {
     console.log(req.body)
 
     res.status(200).send('EVENT_RECEIVED')
-})
-
-app.get('*', function(req, res) {
-    res.status(403).end()
 })
 
 app.listen(3000, 'localhost', () => console.log('Express web-server is up and running...'))
