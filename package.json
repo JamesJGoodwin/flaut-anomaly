@@ -36,7 +36,7 @@
     "facebook-chat-api": "github:Schmavery/facebook-chat-api",
     "form-data": "^3.0.0",
     "got": "^10.5.7",
-    "ioredis": "^4.14.1",
+    "ioredis": "^4.16.3",
     "moment": "^2.24.0",
     "nodemon": "^2.0.2",
     "pug": "^2.0.4",
