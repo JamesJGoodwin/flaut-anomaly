@@ -28,17 +28,14 @@ app.use(express.static('public'))
 
 app.disable('x-powered-by')
 
-app.get('/anomaly/', function(req, res) {
-    anomaly(templates.anomaly, req)
-        .then(anomalyRes => {
-            res.status(anomalyRes.code)
-                .set(anomalyRes.headers)
-                .send(anomalyRes.body)
-        })
-        .catch(e => {
-            console.error(e)
-            res.send(500)
-        })
+app.get('/anomaly/', async (req, res) => {
+    try {
+        const resp = await anomaly(templates.anomaly, req)
+        res.status(resp.code).set(resp.headers).send(resp.body)
+    } catch (e) {
+        console.error(e)
+        res.send(500)
+    }
 })
 
 app.listen(3000, 'localhost', () => {
