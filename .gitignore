@@ -108,3 +108,9 @@ dist
 
 # Custom
 server/build/
+public/bundle/
+images/*
+images/thumbnails/*
+!images/thumbnails
+images/anomalies/*
+!images/anomalies
