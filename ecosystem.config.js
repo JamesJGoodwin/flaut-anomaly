@@ -3,7 +3,7 @@ module.exports = {
         {
             name: 'Anomaly',
             script: './server/build/index.js',
-            watch: false,
+            watch: ['server/build', 'public/bundle'],
             env: {
                 NODE_ENV: 'production'
             },
