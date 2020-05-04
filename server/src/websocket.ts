@@ -43,7 +43,7 @@ export function init(): void {
     eventListener = new WebSocketListener()
 
     wss.on('connection', (ws: WebSocketWithPing) => { // обработать подключение нового клиента
-        eventListener.on('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
+        eventListener.once('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
             ws.send(data)
         })
 
