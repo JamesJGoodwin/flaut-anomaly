@@ -22,8 +22,8 @@ const onError = (ev: Event): void => {
 
 export function init(): void {
     window.startWebSocket = function(): void {
-        const wsProto = document.location.protocol === 'https:' ? 'wss' : 'ws'
-        window.ws = new WebSocket(`${wsProto}://${document.location.hostname}:8888`)
+        const isDev = ['localhost', '127.0.0.1'].includes(document.location.hostname)
+        window.ws = new WebSocket(isDev ? 'ws://localhost:8888' : document.location.origin + '/ws')
 
         window.ws.onopen = onOpen
         window.ws.onclose = onClose
