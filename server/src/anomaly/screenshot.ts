@@ -1,11 +1,9 @@
-import { TicketParser, AnomalyPictureReturnType } from '../../../types'
-import { Browser } from 'puppeteer'
-
 /**
  * Core Modules
  */
 
-import path from 'path'
+import got from 'got'
+import puppeteer from 'puppeteer'
 
 /**
  * Engine Modules
@@ -15,26 +13,30 @@ import path from 'path'
  * Logic
  */
 
-export async function getAnomalyPicture(browser: Browser, query: string): Promise<AnomalyPictureReturnType> {
-    const page = (await browser.pages())[0]
+export async function getAnomalyPicture(query: string, imageName: string): Promise<string> {
+    if (process.env.NODE_ENV !== 'production') {
+        const browser = await puppeteer.launch({ args: ['--no-sandbox']})
+        const page = (await browser.pages())[0]
+        const content = await page.goto(`http://localhost:${process.env.EXPRESS_PORT}/render/?t=${query}&i=${imageName}`, { waitUntil: 'networkidle0' })
 
-    const response = await page.goto(`http://localhost:3000/anomaly/?t=${query}`, { waitUntil: 'networkidle0' })
-
-    if (response.status() === 200) {
-        const anomalyData: TicketParser = await page.evaluate(() => anomalyData)
-        const origin = anomalyData.segments[0].origin.code
-        const destination = anomalyData.segments[0].destination.code
-        const img = path.join(
-            __dirname,
-            `../../../images/${origin}-${destination}_${Math.round(new Date().valueOf() / 1000)}.png`
-        )
+        if (content.status() !== 200) {
+            throw new Error('Anomaly image render failed')
+        }
 
         await page.setViewport({ width: 1200, height: 1200 })
-        await page.screenshot({ path: img })
-
-        return { imgAddr: img, anomalyData: anomalyData }
+        return await page.screenshot({ encoding: 'base64' })
     } else {
-        const err = await response.text()
-        throw new Error(`Failed to fetch /anomaly/?t=${query}: ${err}`)
+        if (!process.env.ANOMALY_DOMAIN) {
+            throw new Error('You forgot to set process.env.ANOMALY_DOMAIN!')
+        }
+
+        const res = await got(`http://service.prerender.cloud/screenshot/${process.env.ANOMALY_DOMAIN}/render/?t=${query}&i=${imageName}`, {
+            headers: {
+                'Prerender-Device-Width': '1200',
+                'Prerender-Device-Height': '1200'
+            }
+        })
+
+        return res.rawBody.toString('base64')
     }
 }

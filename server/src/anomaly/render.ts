@@ -5,21 +5,20 @@ import { WeatherAPI } from '../../../types'
  * Core modules
  */
 
+import fs from 'fs'
 import got from 'got'
+import path from 'path'
 import dotenv from 'dotenv'
-import Redis from 'ioredis'
 import moment from 'moment'
 import { Request } from 'express'
 
-const redis = new Redis()
 dotenv.config()
 
 /**
  * Engine modules
  */
 
-import { parseTicketLine } from '../functions'
-import { getPixabayImage, getPexelsImage } from './images'
+import { parseTicketLink } from '../functions'
 
 /**
  * Logic
@@ -48,19 +47,26 @@ const currencyIconsIndex = {
 }
 
 interface AnomalyRes {
-    code: number
+    code: number;
     headers: {
-        [key: string]: string
-    }
-    body: string
+        [key: string]: string;
+    };
+    body: string;
 }
 
 export async function render(anomaly: compileTemplate, req: Request): Promise<AnomalyRes> {
     try {
         // Is ?t not present
         if (!req.query.hasOwnProperty('t')) return { code: 403, headers: {}, body: 'Token is missing' }
+        if (!req.query.hasOwnProperty('i')) return { code: 403, headers: {}, body: 'Image name is missing' }
 
-        var anomalyData = await parseTicketLine(req.query.t)
+        if (!fs.existsSync(path.resolve(__dirname, '../../../images/' + req.query.i))) {
+            const errMsg = `Image ${req.query.i} does not exist!`
+            console.error(errMsg)
+            return { code: 500, headers: {}, body: errMsg }
+        }
+
+        const anomalyData = await parseTicketLink(req.query.t as string)
 
         if (anomalyData.result !== 'success') {
             return { code: 500, headers: {}, body: 'An error occured while parsing ?t query' }
@@ -79,34 +85,6 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
                 .replace(/\./g, '')
         }
 
-        var imageCacheKey = `anomaly_background_image_${anomalyData.data.segments[0].destination.code}`
-        var imageCacheUrl: string | null = await redis.get(imageCacheKey)
-
-        if (imageCacheUrl === null) {
-            try {
-                anomalyData.data.imageSrc = (await getPixabayImage(anomalyData.data.imageKeyword)).image
-            } catch (e) {
-                console.log('\x1b[31m%s\x1b[0m', 'Pixabay image download failed, falling back to Pexels method...')
-                console.error(e)
-            }
-
-            if ('imageSrc' in anomalyData.data === false || anomalyData.data.imageSrc === null) {
-                try {
-                    anomalyData.data.imageSrc = (await getPexelsImage(anomalyData.data.imageKeyword)).image
-                } catch (e) {
-                    console.log('\x1b[31m%s\x1b[0m', 'Pexels image download failed as well, shutting down...')
-                }
-            }
-
-            if ('imageSrc' in anomalyData.data === false || anomalyData.data.imageSrc === null) {
-                return { code: 500, headers: {}, body: 'Both image download methods failed' }
-            }
-
-            await redis.set(imageCacheKey, anomalyData.data.imageSrc, 'EX', 86400)
-        } else {
-            anomalyData.data.imageSrc = imageCacheUrl
-        }
-
         if (anomalyData.data.currency !== 'rub') {
             try {
                 const currencyRates: { [key: string]: number } = await got(
@@ -123,6 +101,8 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
             }
         }
 
+        let weatherText = ''
+
         try {
             const weatherRes: WeatherAPI = await got(
                 `https://api.darksky.net/forecast/${process.env.WEATHER_TOKEN}/${anomalyData.data.segments[0].destination.coordinates.lat},${anomalyData.data.segments[0].destination.coordinates.lon},${anomalyData.data.segments[0].arrival.timestamp}?exclude=currently,flags,hourly`
@@ -130,11 +110,11 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
 
             const tempCelcius = Math.round(((weatherRes.daily.data[0].temperatureHigh - 32) * 5) / 9)
 
-            var weatherText = `${
+            weatherText = `${
                 weatherMonthes[new Date(anomalyData.data.segments[0].arrival.timestamp * 1000).getMonth()]
             } ${tempCelcius > 0 ? '+' : ''}${tempCelcius}`
         } catch (e) {
-            console.log('\x1b[31m%s\x1b[0m', 'Failed to fetch weather data...')
+            console.error('\x1b[31m%s\x1b[0m', 'Failed to fetch weather data...')
             console.error(e)
         }
 
@@ -148,6 +128,7 @@ export async function render(anomaly: compileTemplate, req: Request): Promise<An
             body: anomaly({
                 anomalyData: anomalyData.data,
                 weatherText: weatherText,
+                imageName: req.query.i,
                 now: Math.round(new Date().valueOf() / 1000),
                 currencyClass: currencyIconsIndex[anomalyData.data.currency]
             })

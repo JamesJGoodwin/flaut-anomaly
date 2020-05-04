@@ -5,32 +5,56 @@
 import fs from 'fs'
 import pug from 'pug'
 import path from 'path'
+import dotenv from 'dotenv'
 import express from 'express'
+
+dotenv.config()
 
 /**
  * Engine Modules
  */
 
 import { render as anomaly } from './anomaly/render'
+import { render as dashboard } from './views/dashboard'
+import { initProcessor } from './anomaly'
+import { init as initWebSocket } from './websocket'
 
 /**
  * Logic
  */
-const anomalyTemplatePath = path.join(__dirname, '../anomaly.pug')
+
+type PugsKeys = 'anomaly' | 'dashboard'
+
+export type PugTemplates = {
+    [key in PugsKeys]?: pug.compileTemplate
+}
+
+const pugs: PugTemplates = {}
+const templatesPath = path.resolve(__dirname, '../templates')
+
+fs.readdirSync(templatesPath).forEach((file: string): void => {
+    if (file.endsWith('.pug')) {
+        try {
+            const filepath = path.resolve(templatesPath, file)
+            pugs[file.split('.pug')[0]] = pug.compile(fs.readFileSync(filepath, { encoding: 'utf-8' }), {
+                filename: filepath
+            })
+        } catch (e) {
+            console.error(e)
+        }
+    }
+})
 
 const app = express()
 
-const templates = {
-    anomaly: pug.compile(fs.readFileSync(anomalyTemplatePath, { encoding: 'utf-8' }), { filename: anomalyTemplatePath })
-}
-
+app.use('/images', express.static('images'))
 app.use(express.static('public'))
 
 app.disable('x-powered-by')
 
-app.get('/anomaly/', async (req, res) => {
+app.get('/render', async (req, res) => {
     try {
-        const resp = await anomaly(templates.anomaly, req)
+        const resp = await anomaly(pugs.anomaly, req)
         res.status(resp.code).set(resp.headers).send(resp.body)
     } catch (e) {
         console.error(e)
@@ -38,6 +62,19 @@ app.get('/anomaly/', async (req, res) => {
     }
 })
 
-app.listen(3000, 'localhost', () => {
-    console.log('Express web-server is up and running...')
+app.get('/', async (req, res) => {
+    try {
+        const resp = await dashboard(pugs.dashboard)
+        res.send(resp)
+    } catch (e) {
+        console.error(e)
+        res.send(500)
+    }
+})
+
+app.listen(parseInt(process.env.EXPRESS_PORT), 'localhost', () => {
+    console.log('Express server is up and running...')
+    initWebSocket()
+    console.log('Websocket server is up and running...')
+    initProcessor()
 })
