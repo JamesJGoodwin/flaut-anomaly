@@ -1,6 +1,5 @@
 import {
     TicketParser,
-    AnomalyPictureReturnType,
     GetWallUploadServerResponse,
     UploadPhotoResponse,
     SaveWallPhotoResponse
@@ -13,17 +12,22 @@ import {
 import fs from 'fs'
 import got from 'got'
 import path from 'path'
-import Redis from 'ioredis'
 import dotenv from 'dotenv'
+import Redis from 'ioredis'
 import moment from 'moment'
 import FormData from 'form-data'
 
+const redis = new Redis({
+    keyPrefix: 'anomaly_'
+})
+
 dotenv.config()
-const redis = new Redis()
 
 /**
  * Engine Modules
  */
+
+import { setEntryStatus } from './db'
 
 /**
  * Logic
@@ -32,131 +36,123 @@ const redis = new Redis()
 const utm = '&utm_campaign=anomaly&utm_source=vkontakte&utm_medium=social'
 const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '../../cases.json'), { encoding: 'utf-8' }))
 
-export async function vk(text: { text: string; link: string }, screenshot: AnomalyPictureReturnType, t: string) {
+export async function vk(text: { text: string; link: string }, data: TicketParser, img: string, rawTicket: string, id: number): Promise<void> {
     /**
      * Получение сокращённой ссылки на пост
      */
-    try {
-        var shortenedRes: { shortened: string } = await got
-            .post(`https://${process.env.PRICESDATA_DOMAIN}/api/shortener`, {
-                json: {
-                    url: text.link + utm,
-                    expiration: screenshot.anomalyData.segments[0].departure.timestamp
-                }
-            })
-            .json()
-    } catch (e) {
-        throw new Error(e)
-    }
+    await setEntryStatus(id, 'processing', 'Создание короткой ссылки...')
+
+    const shortenedRes: { shortened: string } = await got.post(`https://${process.env.PRICESDATA_DOMAIN}/api/shortener`, {
+        json: {
+            url: text.link + utm,
+            expiration: data.segments[0].departure.timestamp
+        }
+    }).json()
 
     const shortened = shortenedRes.shortened
 
     /**
      * Загружаем фотографию на сервера VK.com
      */
-    try {
-        var photoUpload: GetWallUploadServerResponse = await got(
-            `https://api.vk.com/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=8.85`
-        ).json()
-    } catch (e) {
-        throw new Error(e)
-    }
+    await setEntryStatus(id, 'processing', 'Загрузка фото в VK...')
+
+    const photoUpload: GetWallUploadServerResponse = await got(`https://api.vk.com/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=5.103`).json()
 
     if ('error' in photoUpload || 'response' in photoUpload === false) {
-        throw new Error('[VK] photos.getWallUploadServer fetch failed: ' + photoUpload)
+        const e = new Error('photos.getWallUploadServer fetch failed: ' + photoUpload)
+        e.name = 'VKError'
+        throw e
     }
     /**
      * Загрузка фото на сервер VK
      */
-    try {
-        var form = new FormData()
-        form.append('photo', fs.createReadStream(screenshot.imgAddr))
-        var uploadedPhotoResponse: UploadPhotoResponse = await got
-            .post(photoUpload.response.upload_url, {
-                body: form
-            })
-            .json()
-    } catch (e) {
-        throw new Error(`[VK] Failed to upload photo at ${photoUpload.response.upload_url}`)
-    }
+    const imagePath = path.resolve(__dirname, '../../../images/anomalies/' + Date.now() + '.png')
+    fs.writeFileSync(imagePath, img, { encoding: 'base64' })
 
-    if (
-        'error' in uploadedPhotoResponse ||
-        uploadedPhotoResponse.photo === null ||
-        uploadedPhotoResponse.photo.length === 0
-    ) {
-        throw new Error(`[VK] Failed to upload photo at ${photoUpload.response.upload_url}`)
+    setTimeout(() => {
+        fs.unlinkSync(imagePath)
+    }, 30_000)
+
+    const form = new FormData()
+    form.append('photo', fs.createReadStream(imagePath))
+
+    const uploadedPhotoResponse: UploadPhotoResponse = await got.post(photoUpload.response.upload_url, { body: form }).json()
+
+    if ('error' in uploadedPhotoResponse || uploadedPhotoResponse.photo === null || uploadedPhotoResponse.photo.length === 0) {
+        const e = new Error(`Failed to upload photo at ${photoUpload.response.upload_url}`)
+        e.name = 'VKError'
+        throw e
     }
     /**
      * Сохраняем фотографию в группе ВКонтакте
      */
-    try {
-        var imagePostDataResponse: SaveWallPhotoResponse = await got(
-            `https://api.vk.com/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=8.85`
-        ).json()
-    } catch (e) {
-        throw new Error(`[VK] Failed to fetch photos.saveWallPhoto: ${e}`)
-    }
+    const imagePostDataResponse: SaveWallPhotoResponse = await got(`https://api.vk.com/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=5.103`).json()
 
     if ('error' in imagePostDataResponse) {
-        throw new Error(`[VK] Failed to fetch photos.saveWallPhoto: ${imagePostDataResponse}`)
+        const e = new Error(`Failed to fetch photos.saveWallPhoto: ${JSON.stringify(imagePostDataResponse)}`)
+        e.name = 'VKError'
+        throw e
     }
     /**
      * Делаем пост на стене группы
      */
-    const directionKey = `${screenshot.anomalyData.segments[0].origin.code}_${screenshot.anomalyData.segments[0].destination.code}`
-    const direction: string | null = await redis.get(directionKey)
-    const cached: string | null = await redis.get('lastVkPost')
 
-    if (cached === null) {
-        if (direction === null) {
-            try {
-                await got(
-                    `https://api.vk.com/method/wall.post?owner_id=-${
-                        process.env.VK_GROUP_ID
-                    }&from_group=1&message=${encodeURIComponent(
-                        text.text + '\n\nЗабронировать: ' + shortened + '\n\n'
-                    )}&attachments=photo${imagePostDataResponse.response[0].owner_id}_${
-                        imagePostDataResponse.response[0].id
-                    }&access_token=${process.env.VK_TOKEN_STANDALONE}&v=8.85)`
-                )
-            } catch (e) {
-                throw new Error(e)
-            }
-
-            await redis.set('lastVkPost', moment().unix(), 'EX', parseInt(process.env.POST_PREVENT_DIFF) * 60)
-            await redis.set(directionKey, 1, 'EX', parseInt(process.env.POST_PREVENT_CACHED_DIRECTIONS))
-
-            console.log(
-                `[Anomaly][${screenshot.anomalyData.segments[0].origin.code}-${screenshot.anomalyData.segments[0].destination.code}] \x1b[32m%s\x1b[0m`,
-                'Posted!'
-            )
-        }
+    if (await redis.get('posted') !== null) {
+        return await setEntryStatus(id, 'declined', 'Слишком рано для нового поста')
     }
+    
+    await setEntryStatus(id, 'processing', 'Создание поста в группе...')
+
+    let wallPostUrl = `https://api.vk.com/method/wall.post?owner_id=-${process.env.VK_GROUP_ID}`
+        wallPostUrl += `&from_group=1`
+        wallPostUrl += `&message=${encodeURIComponent(text.text + '\n\nЗабронировать: ' + shortened + '\n\n')}`
+        wallPostUrl += `&attachments=photo${imagePostDataResponse.response[0].owner_id}_${imagePostDataResponse.response[0].id}`
+        wallPostUrl += `&access_token=${process.env.VK_TOKEN_STANDALONE}`
+        wallPostUrl += `&v=5.103`
+    
+    await got(wallPostUrl)
+
+    await redis.set('posted', '', 'EX', 7200)
 }
 
-export function genText(anomaly: TicketParser, t: string, p: number) {
+export function declOfNum(number: number, titles: string[]): string {
+    const cases = [2, 0, 1, 1, 1, 2]
+    return titles[(number % 100 > 4 && number % 100 < 20) ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]]
+}
+
+const currencyToCase = (number: number, txt: string[], cases = [2, 0, 1, 1, 1, 2]): string => {
+    return txt[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]]
+}
+
+function currencyToText(num: number, curr: string): string {
+    if (curr === 'rub') return currencyToCase(num, ['рубля', 'рубля', 'рублей'])
+    if (curr === 'uah') return currencyToCase(num, ['гривны', 'гривны', 'гривен'])
+    if (curr === 'kzt') return currencyToCase(num, ['тенге', 'тенге', 'тенге'])
+    if (curr === 'usd') return currencyToCase(num, ['доллара', 'доллара', 'долларов'])
+}
+
+export function genText(anomaly: TicketParser, t: string, p: number): { text: string; link: string } {
     for (let i = 0; i < anomaly.segments.length; i++) {
-        for (let j in cases) {
-            if (j === anomaly.segments[i].origin.city_code) {
+        for (const j in cases) {
+            if (j === anomaly.segments[i].origin.cityCode) {
                 anomaly.segments[i].origin.case = 'из ' + cases[j].cases.ro
             }
 
-            if (j === anomaly.segments[i].destination.city_code) {
+            if (j === anomaly.segments[i].destination.cityCode) {
                 anomaly.segments[i].destination.case = cases[j].cases.vi
             }
         }
     }
 
-    let tripLength = moment
+    const tripLength = moment
         .unix(anomaly.segments[1].departure.timestamp)
         .diff(moment.unix(anomaly.segments[0].departure.timestamp), 'days')
 
-    let finalText = `🔥 Специальное предложение! ${anomaly.segments[0].origin.case.replace('из', 'Из')} ${
+    const finalText = `🔥 Специальное предложение! ${anomaly.segments[0].origin.case.replace('из', 'Из')} ${
         anomaly.segments[0].destination.case
-    } на ${tripLength} ${daysCount(tripLength)} за ${anomaly.price} ${currencyToText(anomaly.price, anomaly.currency)}`
+    } на ${tripLength} ${declOfNum(tripLength, ['день', 'дня', 'дней'])} за ${anomaly.price} ${currencyToText(anomaly.price, anomaly.currency)}`
 
-    var finalLink = `https://www.flaut.ru/search/${anomaly.segments[0].origin.code}${moment
+    let finalLink = `https://www.flaut.ru/search/${anomaly.segments[0].origin.code}${moment
         .unix(anomaly.segments[0].departure.timestamp)
         .format('DDMM')}${anomaly.segments[0].destination.code}`
 
@@ -169,27 +165,5 @@ export function genText(anomaly: TicketParser, t: string, p: number) {
     return {
         text: finalText,
         link: finalLink
-    }
-}
-
-function daysCount(n: number) {
-    if (n === 1) return 'день'
-    else if (n >= 2 && n <= 4) return 'дня'
-    else return 'дней'
-}
-
-function currencyToText(num: number, curr: string) {
-    const currencyToCase = (number: number, txt: Array<string>, cases = [2, 0, 1, 1, 1, 2]) =>
-        txt[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]]
-
-    switch (curr) {
-        case 'rub':
-            return currencyToCase(num, ['рубля', 'рубля', 'рублей'])
-        case 'uah':
-            return currencyToCase(num, ['гривны', 'гривны', 'гривен'])
-        case 'kzt':
-            return currencyToCase(num, ['тенге', 'тенге', 'тенге'])
-        case 'usd':
-            return currencyToCase(num, ['доллара', 'доллара', 'долларов'])
     }
 }

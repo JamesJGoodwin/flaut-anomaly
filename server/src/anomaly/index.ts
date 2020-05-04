@@ -2,244 +2,125 @@
  * Core Modules
  */
 
-import fs from 'fs'
-import url from 'url'
-import got from 'got'
-import path from 'path'
-import Redis from 'ioredis'
 import dotenv from 'dotenv'
-import moment from 'moment'
-import readline from 'readline'
-import puppeteer from 'puppeteer'
+import { EventEmitter } from 'events'
+import Redis from 'ioredis'
 
-const login = require('facebook-chat-api')
-
-const redis = new Redis()
-dotenv.config()
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+const redis = new Redis({
+    keyPrefix: 'anomaly_'
 })
+
+dotenv.config()
 
 /**
  * Engine Modules
  */
 
+import { genText, vk as createVkPost, declOfNum } from './vk'
+import { parseTicketLink, getAvaragePrice } from '../functions'
+import { initFacebookListener } from './listener'
+import { createHistoricalEntry, setEntryStatus, getImages } from './db'
 import { getAnomalyPicture } from './screenshot'
-import { genText, vk as createVkPost } from './vk'
 
 /**
  * Logic
  */
-;(async () => {
-    const facebookAppstateCacheKey = 'facebook_appstate'
-    const appstate: string | null = await redis.get(facebookAppstateCacheKey)
 
-    const credentials =
-        appstate === null
-            ? { email: process.env.FB_LOGIN, password: process.env.FB_PASS }
-            : { appState: JSON.parse(appstate) }
+const POST_PREVENT_MAX_DAYS = parseInt(process.env.POST_PREVENT_MAX_DAYS)
+const POST_PREVENT_MAX_PRICE = parseInt(process.env.POST_PREVENT_MAX_PRICE)
 
-    login(credentials, async (err: any, api: any) => {
-        if (err) {
-            switch (err.error) {
-                case 'login-approval':
-                    console.log('Enter code > ')
-                    rl.on('line', line => {
-                        err.continue(line)
-                        rl.close()
-                    })
-                    break
-                default:
-                    console.error(err)
-            }
-            return
+class FBListener extends EventEmitter {}
+
+export async function initProcessor(): Promise<void> {
+    const facebookListener = new FBListener()
+
+    initFacebookListener(facebookListener)
+
+    facebookListener.on('message', async rawStr => {
+        const parsed = await parseTicketLink(rawStr)
+
+        if (parsed.result !== 'success') return
+
+        const { id } = await createHistoricalEntry(parsed.data)
+
+        if (await redis.get('posted') !== null) {
+            return await setEntryStatus(id, 'declined', 'Слишком рано для нового поста')
         }
 
-        api.setOptions({
-            listenEvents: true,
-            userAgent:
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'
-        })
+        const images = await getImages(parsed.data.segments[0].destination.cityCode)
 
-        await redis.set(facebookAppstateCacheKey, JSON.stringify(api.getAppState()), 'EX', 86400 * 90)
+        if (images.length === 0) {
+            return await setEntryStatus(id, 'declined', `Не загружены изображения города`)
+        }
 
-        api.listenMqtt(async (err: any, event: any) => {
-            if (err) return console.error(err)
+        const image = images.length > 1 ? images[Math.floor(Math.random() * images.length)] : images[0]
 
-            if (event.type !== 'message' || 'attachments' in event === false) return
-            if (event.attachments[0].source !== 'Aviasales Бот-аномальных цен') return
-            /**
-             * Автоматическое удаление файлов
-             */
-            fs.readdirSync(path.join(__dirname, '../../../images/')).forEach(val => {
-                if (val.endsWith('.png')) {
-                    const file = path.join(__dirname, '../../../images/' + val)
-                    const mtime = fs.statSync(file).mtime
+        /*setTimeout(async () => {
+            await setEntryStatus(id, 'declined', `Таймаут (обработка заняла > 60 секунд)`)
+        }, 60_000)*/
+        
+        const daysFromNow = Math.round((parsed.data.segments[0].departure.timestamp - new Date().valueOf() / 1000) / 60 / 60 / 24)
+        
+        if (daysFromNow > POST_PREVENT_MAX_DAYS) {
+            const daysDiff = daysFromNow - POST_PREVENT_MAX_DAYS
+            return await setEntryStatus(id, 'declined', `Дата отправки слишком далеко (+${daysDiff} ${declOfNum(daysDiff, ['день', 'дня', 'дней'])})`)
+        }
 
-                    if (Math.round(new Date().valueOf() / 1000) - Math.round(mtime.valueOf() / 1000) > 3600) {
-                        fs.unlinkSync(file)
-                        console.log(`[GC] File ${val} has been deleted automatically`)
-                    }
-                }
-            })
+        if (parsed.data.price > POST_PREVENT_MAX_PRICE) {
+            return await setEntryStatus(id, 'declined', `Цена превышает заданный порог (+${parsed.data.price}руб.)`)
+        }
 
-            const lastVkPost: string | null = await redis.get('lastVkPost')
+        await setEntryStatus(id, 'processing', `Проверка цены...`)
 
-            if (lastVkPost !== null) return
+        const avgPrice = await getAvaragePrice(
+            parsed.data.segments[0].origin.cityCode,
+            parsed.data.segments[0].destination.cityCode,
+            parsed.data.segments[0].departure.timestamp
+        )
 
-            let ticketLink = ''
+        if (avgPrice.result === 'error') {
+            return await setEntryStatus(id, 'failed', `Не удалось получить цену от API`)
+        } else {
+            if (avgPrice.x > parsed.data.price) {
+                return await setEntryStatus(id, 'declined', `Скидочная цена превышает среднюю цену по периоду`)
+            }
+        }
 
-            try {
-                for (const callToAction of event.attachments[0].target.call_to_actions) {
-                    if (callToAction.title === 'Показать билет') {
-                        let aviasalesTracker = ''
+        await setEntryStatus(id, 'processing', 'Генерируется изображение...')
 
-                        for (const [k, v] of new URLSearchParams(url.parse(callToAction.action_link).search)) {
-                            if (k === 'u') aviasalesTracker = v
-                        }
+        let anomalyBase64Screenshot: string
 
-                        const { headers, ...res } = await got(aviasalesTracker, {
-                            followRedirect: false,
-                            headers: {
-                                'user-agent': `Hello, Aviasales developers. I am friendly bot from Flaut.ru. Please don't block me, okay?`
-                            }
-                        })
-
-                        if (!headers.location.startsWith('https://hydra.aviasales.ru')) {
-                            return console.error(
-                                `Failed to parse URL from tracker; Code: ${res.statusCode}, headers: ${headers}`
-                            )
-                        }
-
-                        for (const [k, v] of new URLSearchParams(url.parse(headers.location).search)) {
-                            if (k === 't') ticketLink = v
-                        }
-                    }
-                }
-            } catch (e) {
+        try {
+            anomalyBase64Screenshot = await getAnomalyPicture(rawStr, image.name)
+        } catch (e) {
+            if (e.message === 'Anomaly image render failed') {
+                await setEntryStatus(id, 'failed', 'Chromium не удалось загрузить изображение')
+            } else if (e.message === 'You forgot to set process.env.ANOMALY_DOMAIN!') {
+                await setEntryStatus(id, 'failed', 'Не установлен process.env.ANOMALY_DOMAIN')
+            } else {
                 console.error(e)
-                return
+                await setEntryStatus(id, 'declined', `[${e.name}] ${e.message}`)
             }
+        }
 
-            if (ticketLink.length === 0) return
-            /**
-             * Parse route and dates
-             */
-            try {
-                var preventSplitStrings = ticketLink.split('_')
-                var preventPrice = parseInt(preventSplitStrings[2])
-                var preventSegments = preventSplitStrings[0]
-                    .split(preventSplitStrings[0].substring(0, 2))[1]
-                    .match(/([0-9]{26}[A-Z]+)/g)
-                var preventDepartureDate = preventSegments[0].substring(0, 10)
-                var preventCities = preventSegments[0].match(/[A-Z]{3}/g)
-            } catch (e) {
-                console.log('ticketLink: ' + ticketLink)
-                console.error(e)
-            }
-            /**
-             * If date is too far
-             */
-            if (
-                moment.unix(parseInt(preventDepartureDate)).diff(moment(), 'days') >
-                parseInt(process.env.POST_PREVENT_MAX_DAYS)
-            ) {
-                return console.log(
-                    `[Anomaly][${preventCities[0]}-${
-                        preventCities[preventCities.length - 1]
-                    }] Departure date is far than ${process.env.POST_PREVENT_MAX_DAYS} days from now`
-                )
-            }
-            /**
-             * Если цена билета слишком большая (см config.json)
-             */
-            if (preventPrice > parseInt(process.env.POST_PREVENT_MAX_PRICE)) {
-                return console.log(
-                    `[Anomaly][${preventCities[0]}-${preventCities[preventCities.length - 1]}] Price is higher than ${
-                        process.env.POST_PREVENT_MAX_PRICE
-                    } rubles`
-                )
-            }
-            /**
-             * Запрашиваем информацию по ценам на месяц, в котором планируется совершить вылет
-             */
-            try {
-                var preventPrices = await got(
-                    `https://${process.env.PRICESDATA_DOMAIN}/api/prices/route?origin=${preventCities[0]}&destination=${
-                        preventCities[preventCities.length - 1]
-                    }&period=2019-03-01&oneway=false`
-                )
-            } catch (e) {
-                try {
-                    console.log(e.response.body)
-                } catch (unused) {
-                    console.error(e)
-                }
-            }
+        await setEntryStatus(id, 'processing', 'Генерируется текст...')
 
-            /**
-             * Агрегируем информацию и находим среднюю цену по месяцу
-             */
-            var preventPricesObj = JSON.parse(preventPrices.body).data
-            var preventPricesSum = 0
+        let text: { text: string; link: string }
 
-            for (let i = 0; i < preventPricesObj.length; i++) {
-                preventPricesSum = preventPricesSum + parseInt(preventPricesObj[i].value)
-            }
+        try {
+            text = genText(parsed.data, rawStr, parsed.data.price)
+        } catch (e) {
+            await setEntryStatus(id, 'failed', `[${e.name}] ${e.message}`)
+            return console.error(e)
+        }
 
-            var preventAvgPrice = Math.round(preventPricesSum / preventPricesObj.length)
+        try {
+            await createVkPost(text, parsed.data, anomalyBase64Screenshot, rawStr, id)
+        } catch (e) {
+            await setEntryStatus(id, 'failed', `[${e.name}] ${e.message}`)
+            return console.error(e)
+        }
 
-            /**
-             * Если цена билета с учётом скидки больше, чем средняя цена по месяцу
-             */
-            if (preventPrice > preventAvgPrice) {
-                return console.log(
-                    `[Anomaly][${preventCities[0]}-${
-                        preventCities[preventCities.length - 1]
-                    }] Anomaly price is higher than avarage price`
-                )
-            }
-            /**
-             * Запускаем Puppeteer и начинаем рендеринг изображения со страницы
-             */
-            try {
-                var browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] })
-            } catch (e) {
-                console.error('Failed to launch browser: ', e)
-                browser.close()
-            }
-
-            try {
-                var screenshot = await getAnomalyPicture(browser, ticketLink)
-            } catch (e) {
-                if (e.message.includes('Both image download methods failed')) {
-                    return console.log(
-                        `[${preventCities[0]}-${
-                            preventCities[preventCities.length - 1]
-                        }] Both image download methods failed`
-                    )
-                } else if (e.message.includes('no image available for keyword')) {
-                    return console.log(`[${preventCities[0]}-${preventCities[preventCities.length - 1]}] ${e.message}`)
-                } else {
-                    return console.error(e)
-                }
-            } finally {
-                await browser.close()
-            }
-
-            try {
-                var text = genText(screenshot.anomalyData, ticketLink, preventPrice)
-            } catch (e) {
-                return console.error(e)
-            }
-
-            try {
-                await createVkPost(text, screenshot, ticketLink)
-            } catch (e) {
-                return console.error(e)
-            }
-        })
+        await setEntryStatus(id, 'succeeded', 'Создано')
     })
-})()
+}

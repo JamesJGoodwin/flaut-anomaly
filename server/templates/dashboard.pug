@@ -1,0 +1,14 @@
+doctype html
+html(lang='ru')
+    head
+        meta(charset='utf-8')
+        title Anomaly Dashboard
+        meta(name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no')
+        link(rel='stylesheet' href='https://fonts.googleapis.com/css?family=Rubik:300,400,500')
+        each path in stylesheets
+            link(rel='stylesheet' type='text/css' href=path media="all")
+    body
+        noscript You need to enable JavaScript to run this app
+        #root
+        each path in scripts
+            script(src=path defer)
