@@ -61,7 +61,7 @@
     .card {
         transition: transform .3s ease, opacity .3s ease;
         min-height: 90px;
-        box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14);
+        border-radius: 8px;
         
         &.entering {
             transform: translateY(-15px) scale(.9);

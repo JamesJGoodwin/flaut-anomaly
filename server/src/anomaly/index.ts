@@ -47,6 +47,10 @@ export async function initProcessor(): Promise<void> {
             return await setEntryStatus(id, 'declined', 'Слишком рано для нового поста')
         }
 
+        if (await redis.get(`${parsed.data.segments[0].origin.cityCode}_${parsed.data.segments[0].destination.cityCode}`) !== null) {
+            return await setEntryStatus(id, 'declined', `Направление уже публиковалось за последние сутки`)
+        }
+
         const images = await getImages(parsed.data.segments[0].destination.cityCode)
 
         if (images.length === 0) {

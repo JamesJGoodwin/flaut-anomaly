@@ -32,21 +32,23 @@ interface WebSocketWithPing extends WebSocket {
     pingScheduled?: boolean;
 }
 
-let eventListener: WebSocketListener | null = null
+const wss = new WebSocket.Server({ port: 8888 })
+const eventListener = new WebSocketListener()
 
 export function sendWebsocketData(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
     eventListener.emit('send', data)
 }
 
 export function init(): void {
-    const wss = new WebSocket.Server({ port: 8888 })
-    eventListener = new WebSocketListener()
+    eventListener.on('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(data)
+            }
+        })
+    })
 
     wss.on('connection', (ws: WebSocketWithPing) => { // обработать подключение нового клиента
-        eventListener.on('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
-            ws.send(data)
-        })
-
         ws.on('pong', () => {
             ws.isAlive = true
             ws.lastPingpong = Date.now()
@@ -163,15 +165,19 @@ export function init(): void {
 
                         await sharp(filepath).resize(300).toFile(thumbPath)
 
-                        return ws.send(
-                            JSON.stringify({
-                                type: 'upload-image',
-                                data: {
-                                    result: 'success',
-                                    image: image
-                                }
-                            } as WebSocketTransfer.UploadImageResult)
-                        )
+                        wss.clients.forEach(client => {
+                            if (client.readyState === WebSocket.OPEN) {
+                                client.send(
+                                    JSON.stringify({
+                                        type: 'upload-image',
+                                        data: {
+                                            result: 'success',
+                                            image: image
+                                        }
+                                    } as WebSocketTransfer.UploadImageResult)
+                                )
+                            }
+                        })
                     } catch (e) {
                         console.error(e)
                         return ws.send(
@@ -191,15 +197,19 @@ export function init(): void {
 
                         await deleteImageRecord(parsed.data.name)
 
-                        return ws.send(
-                            JSON.stringify({
-                                type: 'delete-image',
-                                data: {
-                                    result: 'success',
-                                    name: parsed.data.name
-                                }
-                            } as WebSocketTransfer.DeleteImageResult)
-                        )
+                        wss.clients.forEach(client => {
+                            if (client.readyState === WebSocket.OPEN) {
+                                client.send(
+                                    JSON.stringify({
+                                        type: 'delete-image',
+                                        data: {
+                                            result: 'success',
+                                            name: parsed.data.name
+                                        }
+                                    } as WebSocketTransfer.DeleteImageResult)
+                                )
+                            }
+                        })
                     } catch (e) {
                         console.error(e)
                         return ws.send(

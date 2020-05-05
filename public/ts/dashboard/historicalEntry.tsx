@@ -62,6 +62,8 @@ export function Entry(props: Props): JSX.Element {
             reader.onloadend = (): void => {
                 const base64data = reader.result
                 
+                window.awaitingUploadNotification = true
+
                 sendWebSocketData(
                     JSON.stringify({
                         type: 'upload-image',
@@ -112,6 +114,7 @@ export function Entry(props: Props): JSX.Element {
     })
 
     const deleteImage = (name: string): void => {
+        window.awaitingDeletionNotification = true
         sendWebSocketData(
             JSON.stringify({
                 type: 'delete-image',
@@ -229,7 +232,7 @@ function Status(props: StatusProps): JSX.Element {
     } else {
         return (
             <div className="text-success text-center">
-                <FontAwesomeIcon icon={faCheckCircle} />
+                <FontAwesomeIcon style={{ fontSize: '28px' }} icon={faCheckCircle} />
             </div>
         )
     }

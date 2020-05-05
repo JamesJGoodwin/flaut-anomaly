@@ -113,16 +113,24 @@ export class App extends Component<{}, AppState> {
                     })
                 }
             } else if (message.type === 'upload-image') {
-                if (message.data.result === 'error') {
-                    showErrorToast(message.data.reason)
-                } else {
-                    showSuccessToast(`Image '${message.data.image.name}' uploaded`)
+                if (window.awaitingUploadNotification) {
+                    if (message.data.result === 'error') {
+                        showErrorToast(message.data.reason)
+                    } else {
+                        showSuccessToast(`Image '${message.data.image.name}' uploaded`)
+                    }
+
+                    delete window.awaitingUploadNotification
                 }
             } else if (message.type === 'delete-image') {
-                if (message.data.result === 'error') {
-                    showErrorToast(message.data.reason)
-                } else {
-                    showSuccessToast(`Image ${message.data.name} has been deleted`)
+                if (window.awaitingDeletionNotification) {
+                    if (message.data.result === 'error') {
+                        showErrorToast(message.data.reason)
+                    } else {
+                        showSuccessToast(`Image ${message.data.name} has been deleted`)
+                    }
+
+                    delete window.awaitingDeletionNotification
                 }
             }
         }) as EventListener)

@@ -97,6 +97,10 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
      * Делаем пост на стене группы
      */
 
+    if (await redis.get(`${data.segments[0].origin.cityCode}_${data.segments[0].destination.cityCode}`) !== null) {
+        return await setEntryStatus(id, 'declined', `Направление уже публиковалось за последние сутки`)
+    }
+
     if (await redis.get('posted') !== null) {
         return await setEntryStatus(id, 'declined', 'Слишком рано для нового поста')
     }
@@ -113,6 +117,7 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
     await got(wallPostUrl)
 
     await redis.set('posted', '', 'EX', 7200)
+    await redis.set(`${data.segments[0].origin.cityCode}_${data.segments[0].destination.cityCode}`, '', 'EX', 86_400)
 }
 
 export function declOfNum(number: number, titles: string[]): string {
