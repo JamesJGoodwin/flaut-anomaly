@@ -40,7 +40,7 @@ export function sendWebsocketData(data: string | ArrayBufferLike | Blob | ArrayB
 }
 
 export function init(): void {
-    eventListener.once('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
+    eventListener.on('send', (data: string | ArrayBufferLike | Blob | ArrayBufferView): void => {
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(data)

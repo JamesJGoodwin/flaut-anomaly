@@ -36,7 +36,7 @@ export async function initProcessor(): Promise<void> {
 
     initFacebookListener(facebookListener)
 
-    facebookListener.once('message', async rawStr => {
+    facebookListener.on('message', async rawStr => {
         const parsed = await parseTicketLink(rawStr)
 
         if (parsed.result !== 'success') return
@@ -45,6 +45,10 @@ export async function initProcessor(): Promise<void> {
 
         if (await redis.get('posted') !== null) {
             return await setEntryStatus(id, 'declined', 'Слишком рано для нового поста')
+        }
+
+        if (await redis.get(`${parsed.data.segments[0].origin.cityCode}_${parsed.data.segments[0].destination.cityCode}`) !== null) {
+            return await setEntryStatus(id, 'declined', `Направление уже публиковалось за последние сутки`)
         }
 
         const images = await getImages(parsed.data.segments[0].destination.cityCode)
