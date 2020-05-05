@@ -36,7 +36,7 @@ export async function initProcessor(): Promise<void> {
 
     initFacebookListener(facebookListener)
 
-    facebookListener.once('message', async rawStr => {
+    facebookListener.on('message', async rawStr => {
         const parsed = await parseTicketLink(rawStr)
 
         if (parsed.result !== 'success') return
