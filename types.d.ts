@@ -239,6 +239,8 @@ declare global {
     interface Window {
         ws: WebSocket;
         startWebSocket(): void;
+        awaitingUploadNotification: boolean;
+        awaitingDeletionNotification: boolean;
     }
 }
 
