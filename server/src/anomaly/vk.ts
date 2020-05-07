@@ -16,6 +16,7 @@ import dotenv from 'dotenv'
 import Redis from 'ioredis'
 import moment from 'moment'
 import FormData from 'form-data'
+import streamBuffers from 'stream-buffers'
 
 const redis = new Redis({
     keyPrefix: 'anomaly_'
@@ -66,15 +67,15 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
     /**
      * Загрузка фото на сервер VK
      */
-    const imagePath = path.resolve(__dirname, '../../../images/anomalies/' + Date.now() + '.png')
-    fs.writeFileSync(imagePath, img, { encoding: 'base64' })
-
-    setTimeout(() => {
-        fs.unlinkSync(imagePath)
-    }, 30_000)
+    const readableStreamBuffer = new streamBuffers.ReadableStreamBuffer({
+        frequency: 10,
+        chunkSize: 2048
+      })
+      
+    readableStreamBuffer.put(img, 'utf8')
 
     const form = new FormData()
-    form.append('photo', fs.createReadStream(imagePath))
+    form.append('photo', readableStreamBuffer)
 
     const uploadedPhotoResponse: UploadPhotoResponse = await got.post(photoUpload.response.upload_url, { body: form }).json()
 
