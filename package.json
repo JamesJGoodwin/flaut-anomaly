@@ -64,6 +64,7 @@
     "@fortawesome/react-fontawesome": "^0.1.9",
     "@tippyjs/react": "^4.0.2",
     "@types/sharp": "^0.25.0",
+    "@types/stream-buffers": "^3.0.3",
     "bcrypt": "^4.0.1",
     "bootstrap": "^4.4.1",
     "delay": "^4.3.0",
@@ -87,6 +88,7 @@
     "redux": "^4.0.5",
     "sharp": "^0.25.2",
     "srcset": "^2.0.1",
+    "stream-buffers": "^3.0.2",
     "tippy.js": "^6.2.3",
     "ws": "^7.2.5"
   }
