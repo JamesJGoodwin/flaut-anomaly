@@ -70,7 +70,7 @@ const timeSince = (date: Date): string => {
     for (const grade of data) {
         const interval = Math.floor(seconds / grade.x)
   
-        if (interval > 1) {
+        if (interval >= 1) {
             return interval + ' ' + declOfNum(interval, grade.cases)
         }
     }
@@ -87,7 +87,7 @@ export function Entry(props: Props): JSX.Element {
 
     const interval = setInterval(() => {
         setTimeFromNow(timeSince(new Date(props.entry.added_at)))
-    })
+    }, 1000)
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         acceptedFiles.forEach(file => {
