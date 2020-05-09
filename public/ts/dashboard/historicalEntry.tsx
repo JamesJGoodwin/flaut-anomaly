@@ -21,6 +21,7 @@ import 'tippy.js/animations/shift-away.css';
 
 import { sendWebSocketData } from '../websocket'
 
+
 /**
  * Logic
  */
@@ -50,10 +51,43 @@ const parseDate = (date: string | Date): string => {
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 
+const declOfNum = (number: number, titles: string[]): string => {
+    const cases = [2, 0, 1, 1, 1, 2]
+    return titles[(number % 100 > 4 && number % 100 < 20) ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]]
+}
+
+const timeSince = (date: Date): string => {
+    const seconds = Math.floor((new Date().valueOf() - date.valueOf()) / 1000)
+  
+    const data = [
+        { x: 31536000, cases: ['год', 'года', 'лет'] },
+        { x: 2592000, cases: ['месяц', 'месяца', 'месяцев'] },
+        { x: 86400, cases: ['день', 'дня', 'дней'] },
+        { x: 3600, cases: ['час', 'часа', 'часов'] },
+        { x: 60, cases: ['минута', 'минуты', 'минут'] },
+    ]
+  
+    for (const grade of data) {
+        const interval = Math.floor(seconds / grade.x)
+  
+        if (interval > 1) {
+            return interval + ' ' + declOfNum(interval, grade.cases)
+        }
+    }
+  
+    const secs = Math.floor(seconds)
+    return secs + ' ' + declOfNum(secs, ['секунду', 'секунды', 'секунд'])
+}
+
 export function Entry(props: Props): JSX.Element {
     const [stage, setStage] = useState<'entering' | 'entered'>('entering')
     const [images, setImages] = useState(props.entry.images)
+    const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.added_at)))
     const fullinfo: TicketParser = JSON.parse(props.entry.full_info)
+
+    const interval = setInterval(() => {
+        setTimeFromNow(timeSince(new Date(props.entry.added_at)))
+    })
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         acceptedFiles.forEach(file => {
@@ -130,11 +164,17 @@ export function Entry(props: Props): JSX.Element {
 
         setTimeout(() => setStage('entered'), props.i * 50)
 
-        return (): void => document.removeEventListener('WebSocketStringMessage', wsDataHandler as EventListener)
+        return (): void => {
+            document.removeEventListener('WebSocketStringMessage', wsDataHandler as EventListener)
+            clearInterval(interval)
+        }
     }, [wsDataHandler])
 
     return (
         <div className={['card', props.i + 1 < props.latestLength ? 'mb-3': '', stage, , isDragActive ? 'dragged' : ''].join(' ')}>
+            <div className="card-header text-muted bg-white">
+                {timeFromNow + ' назад'}
+            </div>
             <div {...getRootProps({className: 'dropzone'})}>
                 <input {...getInputProps()} />
                 <div className="card-body d-flex align-items-center" style={{ cursor: 'default' }}>
