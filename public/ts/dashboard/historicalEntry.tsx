@@ -87,7 +87,7 @@ export function Entry(props: Props): JSX.Element {
 
     const interval = setInterval(() => {
         setTimeFromNow(timeSince(new Date(props.entry.added_at)))
-    })
+    }, 1000)
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         acceptedFiles.forEach(file => {
