@@ -3,7 +3,9 @@
  */
 
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { render } from 'react-dom'
+import { Provider } from 'react-redux'
+
 
 import 'normalize.css'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -12,7 +14,8 @@ import 'bootstrap/dist/css/bootstrap.css'
  * Engine Modules
  */
 
-import { App } from './App';
+import App from './App'
+import store from './store'
 
 import '../scss/dashboard.scss'
 
@@ -20,6 +23,9 @@ import '../scss/dashboard.scss'
  * Logic
  */
 
-;(function init(): void {
-    ReactDOM.render(<App />, document.getElementById('root'))
-})()
+render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+    document.getElementById('root')
+)
