@@ -1,10 +1,97 @@
+/**
+ * Core Modules
+ */
+
+/**
+ * Engine Modules
+ */
+
+import { WebSocketTransfer } from '../../types'
+
+import { showErrorToast, showSuccessToast } from './components/toast'
+import {
+    setAuthorizationSucceeded,
+    setAuthorizationFailed,
+    setAuthenticationFailed,
+    setAuthenticationSucceeded
+} from './slices/auth'
+
+import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage } from './slices/dashboard'
+
+
+import store from './store'
+
+/**
+ * Logic
+ */
+
+const newEntrySound = new Audio('/static/notify.mp3')
+newEntrySound.volume = 0.20
+
 const onOpen = (): void => (console.log('Websocket connection established!'))
 
 const onMessage = (ev: MessageEvent): void => {
     if (typeof ev.data === 'string') {
-        document.dispatchEvent(
-            new CustomEvent('WebSocketStringMessage', { detail: ev.data })
-        )
+        const message: WebSocketTransfer.ClientIncoming = JSON.parse(ev.data)
+        const state = store.getState()
+
+        if (message.type === 'authorization') {
+            if (message.data.result === 'error') {
+                showErrorToast(message.data.reason)
+
+                store.dispatch(setAuthorizationFailed())
+            } else {
+                localStorage.setItem('jwt', message.data.payload.jwt)
+                localStorage.setItem('uuid', message.data.payload.uuid)
+                showSuccessToast('Authorization successful', 2000)
+
+                setTimeout(() => {
+                    store.dispatch(setAuthorizationSucceeded())
+                }, 2000)
+            }
+        } else if (message.type === 'authentication') {
+            if (message.data.result === 'error') {
+                showErrorToast(message.data.reason)
+                
+                store.dispatch(setAuthenticationFailed())
+            } else {
+                store.dispatch(setAuthenticationSucceeded())
+            }
+        }
+
+        if (state.auth.isAuthenticated && state.auth.isAuthorized) {
+            if (message.type === 'upload-image') {
+                if (window.awaitingUploadNotification) {
+                    if (message.data.result === 'error') {
+                        showErrorToast(message.data.reason)
+                    } else {
+                        store.dispatch(addNewImage(message.data))
+                        showSuccessToast(`Image '${message.data.image.name}' uploaded`)
+                    }
+    
+                    delete window.awaitingUploadNotification
+                }
+            } else if (message.type === 'delete-image') {
+                if (window.awaitingDeletionNotification) {
+                    if (message.data.result === 'error') {
+                        showErrorToast(message.data.reason)
+                    } else {
+                        store.dispatch(removeImage(message.data))
+                        showSuccessToast(`Image ${message.data.name} has been deleted`)
+                    }
+    
+                    delete window.awaitingDeletionNotification
+                }
+            } else if (message.type === 'latest-entries') {
+                store.dispatch(setLatest(message.data))
+            } else if (message.type === 'new-entry') {
+                newEntrySound.play()
+    
+                store.dispatch(addLatest(message.data.entry))
+            } else if (message.type === 'entry-status-update') {
+                store.dispatch(setEntryStatus(message.data))
+            }
+        }
     } else {
         console.log(ev.data)
     }
@@ -33,4 +120,4 @@ export function init(): void {
     }
 }
 
-export const sendWebSocketData = (data: string): void => window.ws.send(data)
+export const sendWebSocketData = (data: object): void => window.ws.send(JSON.stringify(data))
