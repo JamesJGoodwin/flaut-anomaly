@@ -4,7 +4,7 @@
 
 import React, { useEffect } from 'react'
 
-import '../../scss/loading.scss'
+import '../../../scss/loading.scss'
 
 /**
  * Engine

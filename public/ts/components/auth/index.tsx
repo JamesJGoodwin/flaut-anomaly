@@ -8,17 +8,17 @@ import React, { useEffect, useState } from 'react'
  * Engine Modules
  */
 
-import '../../scss/signin.scss'
+import { WebSocketTransfer } from '../../../../types'
+
+import { sendWebSocketData } from '../../websocket'
+
+import '../../../scss/signin.scss'
 
 /**
  * Logic
  */
 
-interface Props {
-    handleAuth(l: string, p: string): void;
-}
-
-export function Authorization(props: Props): JSX.Element {
+export const Authorization = (): JSX.Element => {
     const [login, setLogin] = useState('')
     const [password, setPassword] = useState('')
 
@@ -28,7 +28,17 @@ export function Authorization(props: Props): JSX.Element {
         return (): void => document.body.classList.remove('signin')
     }, [])
 
-    const handleAuth = (): void => props.handleAuth(login, password)
+    const handleAuth = (): void => {
+        const data: WebSocketTransfer.AuthLogin = {
+            type: 'authorization',
+            data: {
+                login: login,
+                password: password
+            }
+        }
+    
+        sendWebSocketData(data)
+    }
 
     return (
         <form className="form-signin text-center" onSubmit={(e): void => e.preventDefault()}>

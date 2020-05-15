@@ -215,7 +215,7 @@ export interface HistoryEntry {
     there_date: Date;
     back_date?: Date;
     price: string;
-    full_info: string;
+    full_info: TicketParser;
     currency: string;
     status: AllowedStatuses;
     added_at: Date;
@@ -319,12 +319,14 @@ declare namespace WebSocketTransfer {
         };
     }
 
+    interface EntryStatusBody {
+        id: number;
+        status: AllowedStatuses;
+        status_descr?: string;
+    }
+
     interface EntryStatusIncoming extends MainBody {
-        data: {
-            id: number;
-            status: AllowedStatuses;
-            status_descr?: string;
-        };
+        data: EntryStatusBody;
     }
 
     interface UploadImage extends MainBody {
@@ -335,12 +337,14 @@ declare namespace WebSocketTransfer {
         };
     }
 
+    interface UploadImageBody {
+        result: AuthResults;
+        image: ImageRecord;
+        reason?: string;
+    }
+
     interface UploadImageResult extends MainBody {
-        data: {
-            result: AuthResults;
-            image: ImageRecord;
-            reason?: string;
-        };
+        data: UploadImageBody;
     }
 
     interface DeleteImage extends MainBody {
@@ -349,15 +353,16 @@ declare namespace WebSocketTransfer {
         };
     }
 
-    interface DeleteImageResult extends MainBody {
-        data: {
-            result: AuthResults;
-            name: string;
-            reason?: string;
-        };
+    interface DeleteImageBody {
+        result: AuthResults;
+        name: string;
+        reason?: string;
     }
 
-    type DashboardIncoming = HistoryEntries & EntryIncoming & EntryStatusIncoming & UploadImage
+    interface DeleteImageResult extends MainBody {
+        data: DeleteImageBody;
+    }
+
     type ServerIncoming = AuthLogin & JWTValidate & AskForLatest & UploadImage & DeleteImage
-    type ClientIncoming = GiveJWT & JWTError & AuthResult & UploadImageResult & DeleteImageResult
+    type ClientIncoming = GiveJWT & JWTError & AuthResult & UploadImageResult & DeleteImageResult & EntryStatusIncoming & EntryIncoming & HistoryEntries
 }
