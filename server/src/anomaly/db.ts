@@ -41,7 +41,7 @@ export async function createHistoricalEntry(data: TicketParser): Promise<{ id: n
             new Date(data.segments[0].departure.timestamp * 1000),
             new Date(data.segments[data.segments.length - 1].arrival.timestamp * 1000),
             data.price,
-            JSON.stringify(data),
+            data,
             data.currency,
             'processing',
             'Обработка началась',
