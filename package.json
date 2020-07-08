@@ -34,7 +34,7 @@
     "@types/ws": "^7.2.6",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
-    "autoprefixer": "^9.7.6",
+    "autoprefixer": "^9.8.4",
     "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^3.5.3",
