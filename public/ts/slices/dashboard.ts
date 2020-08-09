@@ -38,8 +38,8 @@ const dashboardSlice = createSlice({
                 if (x.id === payload.id) {
                     x.status = payload.status
 
-                    if (x.status_descr) {
-                        x.status_descr = payload.status_descr
+                    if (x.statusDescription) {
+                        x.statusDescription = payload.statusDescription
                     }
                 }
             }
@@ -50,7 +50,7 @@ const dashboardSlice = createSlice({
             const latestCopy = [...state.latest]
 
             for (const l of latestCopy) {
-                if (l.full_info.segments[0].destination.cityCode === payload.image.destination) {
+                if (l.fullInfo.segments[0].destination.cityCode === payload.image.destination) {
                     l.images.push(payload.image)
                 }
             }
