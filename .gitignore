@@ -109,3 +109,6 @@ dist
 # Custom
 server/build/
 public/bundle/
+
+# WWebpack compiled configs
+webpack/*.js
