@@ -9,17 +9,13 @@
     "compile-server": "tsc --project ./server/tsconfig.json",
     "build-server": "run-s clean-server compile-server",
     "clean-server": "rimraf server/build",
-
     "watch-client": "run-s clean-client watch-webpack",
     "watch-webpack": "tsc --esModuleInterop ./webpack/dev.config.ts && webpack --config ./webpack/dev.config.js --watch",
     "build-client": "run-s clean-client build-webpack",
     "build-webpack": "tsc --esModuleInterop ./webpack/prod.config.ts && webpack --config ./webpack/prod.config.js",
     "clean-client": "rimraf public/bundle",
-
     "build": "run-s build-server build-client",
-
     "watch-node": "nodemon --watch ./server/build/ --watch ./server/templates/ -e js,pug",
-
     "test": "jest --config jest.config.js"
   },
   "author": "JamesJGoodwin",
@@ -29,6 +25,7 @@
     "@babel/preset-env": "^7.11.0",
     "@types/bcrypt": "^3.0.0",
     "@types/express": "^4.17.7",
+    "@types/express-http-proxy": "^1.6.1",
     "@types/ioredis": "^4.17.3",
     "@types/jest": "^26.0.9",
     "@types/jsonwebtoken": "^8.5.0",
@@ -78,6 +75,7 @@
     "delay": "^4.4.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-http-proxy": "^1.6.2",
     "facebook-chat-api": "github:Schmavery/facebook-chat-api",
     "form-data": "^3.0.0",
     "got": "^11.5.1",
