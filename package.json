@@ -12,7 +12,7 @@
 
     "watch-client": "run-s clean-client watch-webpack",
     "watch-webpack": "tsc --esModuleInterop ./webpack/dev.config.ts && webpack --config ./webpack/dev.config.js --watch",
-    "build-client": "run-s clean-client build-client",
+    "build-client": "run-s clean-client build-webpack",
     "build-webpack": "tsc --esModuleInterop ./webpack/prod.config.ts && webpack --config ./webpack/prod.config.js",
     "clean-client": "rimraf public/bundle",
 
