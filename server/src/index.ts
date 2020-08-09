@@ -73,7 +73,6 @@ app.get('/', async (req, res) => {
 })
 
 app.listen(parseInt(process.env.EXPRESS_PORT), 'localhost', () => {
-    console.log('NODE_ENV is: ' + process.env.NODE_ENV)
     console.log('Express server is up and running...')
     initWebSocket()
     console.log('Websocket server is up and running...')

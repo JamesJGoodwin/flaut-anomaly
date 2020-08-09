@@ -7,22 +7,25 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [12.x]
-
+        node-version: [14.x]
     steps:
     - uses: actions/checkout@v1
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install and build
-      run: |
-        npm install
-        npm run build
+    - name: install
+      run: npm i
+      env:
+        CI: true
+    - name: Build server
+      run: npm run build-server
+      env:
+        CI: true
+    - name: Build client
+      run: npm run build-client
       env:
         CI: true
