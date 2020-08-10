@@ -10,6 +10,7 @@ import React, { useState, useEffect, Fragment, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { useDropzone } from 'react-dropzone'
+import cx from 'classnames'
 
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/backdrop.css';
@@ -137,7 +138,7 @@ export function Entry(props: Props): JSX.Element {
   }, [])
 
   return (
-    <div className={['card', props.i + 1 < props.latestLength ? 'mb-3' : '', stage, , isDragActive ? 'dragged' : ''].join(' ')}>
+    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength, dragged: isDragActive })}>
       <div className="card-header text-muted bg-white">
         {timeFromNow + ' назад'}
       </div>
