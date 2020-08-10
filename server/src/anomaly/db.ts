@@ -114,24 +114,18 @@ export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
 
   if (latest.length === 0) return []
 
-  const images: Array<ImageRecord[]> = await db.collection('db').find({
-    $or: [...new Set(latest.map(x => {
-      return { destination: x.destination }
-    }))]
+  const images: ImageRecord[] = await db.collection('images').find({
+    $or: [...new Set(latest.map(x => x.destination))].map(code => { return { destination: code } })
   }).toArray()
 
   latest.forEach(entry => {
     images.forEach(image => {
-      image.forEach(img => {
-        if (entry.destination === img.destination) {
-          entry.images = image
-        }
-      })
-    })
+      if (!entry.images) entry.images = []
 
-    if (!entry.images) {
-      entry.images = []
-    }
+      if (image.destination === entry.destination) {
+        entry.images.push(image)
+      }
+    })
   })
 
   return latest
