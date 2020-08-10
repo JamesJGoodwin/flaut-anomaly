@@ -34,7 +34,7 @@ const authSlice = createSlice({
             state.isAuthorized = true
         },
         setAuthenticationFailed: (state): void => {
-            state.isAuthChecked = false
+            state.isAuthChecked = true
         },
         signOut: (state): void => {
             state.isAuthenticated = false

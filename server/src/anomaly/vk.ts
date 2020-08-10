@@ -36,7 +36,7 @@ import { setEntryStatus } from './db'
 const utm = '&utm_campaign=anomaly&utm_source=vkontakte&utm_medium=social'
 const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '../../cases.json'), { encoding: 'utf-8' }))
 
-export async function vk(text: { text: string; link: string }, data: TicketParser, img: string, rawTicket: string, id: number): Promise<void> {
+export async function vk(text: { text: string; link: string }, data: TicketParser, img: string, rawTicket: string, id: string): Promise<void> {
     /**
      * Получение сокращённой ссылки на пост
      */
@@ -56,7 +56,7 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
      */
     await setEntryStatus(id, 'processing', 'Загрузка фото в VK...')
 
-    const photoUpload: GetWallUploadServerResponse = await got(`https://api.vk.com/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=5.103`).json()
+    const photoUpload: GetWallUploadServerResponse = await got(`https://${process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'}/method/photos.getWallUploadServer?access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=5.103`).json()
 
     if ('error' in photoUpload || 'response' in photoUpload === false) {
         const e = new Error('photos.getWallUploadServer fetch failed: ' + photoUpload)
@@ -86,7 +86,7 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
     /**
      * Сохраняем фотографию в группе ВКонтакте
      */
-    const imagePostDataResponse: SaveWallPhotoResponse = await got(`https://api.vk.com/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=5.103`).json()
+    const imagePostDataResponse: SaveWallPhotoResponse = await got(`https://${process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'}/method/photos.saveWallPhoto?group_id=${process.env.VK_GROUP_ID}&server=${uploadedPhotoResponse.server}&hash=${uploadedPhotoResponse.hash}&photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=5.103`).json()
 
     if ('error' in imagePostDataResponse) {
         const e = new Error(`Failed to fetch photos.saveWallPhoto: ${JSON.stringify(imagePostDataResponse)}`)
@@ -107,7 +107,7 @@ export async function vk(text: { text: string; link: string }, data: TicketParse
     
     await setEntryStatus(id, 'processing', 'Создание поста в группе...')
 
-    let wallPostUrl = `https://api.vk.com/method/wall.post?owner_id=-${process.env.VK_GROUP_ID}`
+    let wallPostUrl = `https://${process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'}/method/wall.post?owner_id=-${process.env.VK_GROUP_ID}`
         wallPostUrl += `&from_group=1`
         wallPostUrl += `&message=${encodeURIComponent(text.text + '\n\nЗабронировать: ' + shortened + '\n\n')}`
         wallPostUrl += `&attachments=photo${imagePostDataResponse.response[0].owner_id}_${imagePostDataResponse.response[0].id}`

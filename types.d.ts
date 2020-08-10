@@ -209,17 +209,17 @@ export interface Latest {
 export type AllowedStatuses = 'processing' | 'declined' | 'failed' | 'succeeded'
 
 export interface HistoryEntry {
-    id: number;
+    id?: string;
     origin: string;
     destination: string;
-    there_date: Date;
-    back_date?: Date;
-    price: string;
-    full_info: TicketParser;
+    departureDate: Date;
+    backDate?: Date;
+    price: number;
+    fullInfo: TicketParser;
     currency: string;
     status: AllowedStatuses;
-    added_at: Date;
-    status_descr: string;
+    createdAt: Date;
+    statusDescription: string;
     images?: ImageRecord[];
 }
 
@@ -245,9 +245,9 @@ declare global {
 }
 
 export interface ImageRecord {
-    id: number;
+    id?: string;
     destination: string;
-    added_at: Date;
+    addedAt: Date;
     name: string;
 }
 
@@ -320,9 +320,9 @@ declare namespace WebSocketTransfer {
     }
 
     interface EntryStatusBody {
-        id: number;
+        id: string;
         status: AllowedStatuses;
-        status_descr?: string;
+        statusDescription?: string;
     }
 
     interface EntryStatusIncoming extends MainBody {

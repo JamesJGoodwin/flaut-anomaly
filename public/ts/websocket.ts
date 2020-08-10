@@ -38,7 +38,6 @@ const onMessage = (ev: MessageEvent): void => {
         if (message.type === 'authorization') {
             if (message.data.result === 'error') {
                 showErrorToast(message.data.reason)
-
                 store.dispatch(setAuthorizationFailed())
             } else {
                 localStorage.setItem('jwt', message.data.payload.jwt)
@@ -51,8 +50,11 @@ const onMessage = (ev: MessageEvent): void => {
             }
         } else if (message.type === 'authentication') {
             if (message.data.result === 'error') {
+                if (message.data.reason === 'JWT token expired, please sign in') {
+                    localStorage.removeItem('jwt')
+                }
+
                 showErrorToast(message.data.reason)
-                
                 store.dispatch(setAuthenticationFailed())
             } else {
                 store.dispatch(setAuthenticationSucceeded())
