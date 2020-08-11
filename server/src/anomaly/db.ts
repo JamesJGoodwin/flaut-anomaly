@@ -110,7 +110,7 @@ export async function deleteImageRecord(name: string): Promise<void> {
 }
 
 export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
-  const latest: HistoryEntry[] = await db.collection('history').find().sort({ addedAt: -1 }).limit(n).toArray()
+  const latest: HistoryEntry[] = await db.collection('history').find().sort({ createdAt: -1 }).limit(n).toArray()
 
   if (latest.length === 0) return []
 
