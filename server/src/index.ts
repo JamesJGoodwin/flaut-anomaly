@@ -1,10 +1,10 @@
 /**
  * Core Modules
  */
+import { PugTemplates } from '../../types'
 
 import fs from 'fs'
 import pug from 'pug'
-import got from 'got'
 import path from 'path'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -20,16 +20,12 @@ import { render as anomaly } from './anomaly/render'
 import { render as dashboard } from './views/dashboard'
 import { initProcessor } from './anomaly'
 import { init as initWebSocket } from './websocket'
+import { checkVKApiAvailability, checkImagesDatabaseIntegrity } from './functions'
+import { checkForStuckHistoricalEntries } from './anomaly/db'
 
 /**
  * Logic
  */
-
-type PugsKeys = 'anomaly' | 'dashboard'
-
-export type PugTemplates = {
-  [key in PugsKeys]?: pug.compileTemplate
-}
 
 const pugs: PugTemplates = {}
 const templatesPath = path.resolve(__dirname, '../templates')
@@ -52,6 +48,7 @@ const app = express()
 app.use('/proxy', proxy('https://api.vk.com', {
   proxyReqPathResolver: req => req.originalUrl.replace('/proxy/', '')
 }))
+
 app.use('/images', express.static('images'))
 app.use(express.static('public'))
 
@@ -82,10 +79,10 @@ app.listen(parseInt(process.env.EXPRESS_PORT), 'localhost', () => {
   initWebSocket()
   console.log('Websocket server is up and running...')
   initProcessor()
-
-  got('https://api.vk.com/method/users.get?user_id=1').catch(e => {
-    if ((e.message as string).includes('connect ECONNREFUSED')) {
-      process.env.USE_PROXY = 'true'
-    }
-  })
+  // check if vk.com API is available (usefull for development process in Ukraine)
+  checkVKApiAvailability()
+  // check for stuck historical entries with status "processing"
+  checkForStuckHistoricalEntries()
+  //
+  checkImagesDatabaseIntegrity()
 })

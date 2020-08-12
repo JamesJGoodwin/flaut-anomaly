@@ -74,15 +74,19 @@ export async function setEntryStatus(id: string, value: AllowedStatuses, descr?:
     } as WebSocketTransfer.EntryStatusIncoming)
   )
 
-  await db.collection('images').findOneAndUpdate({ id }, { $set: { value } })
+  await db.collection('history').findOneAndUpdate({ id }, { $set: { status: value } })
 
   if (descr) {
-    await db.collection('images').findOneAndUpdate({ id }, { $set: { statusDescription: descr } })
+    await db.collection('history').findOneAndUpdate({ id }, { $set: { statusDescription: descr } })
   }
 }
 
 export async function getImages(code: string): Promise<ImageRecord[]> {
   return await db.collection('images').find({ destination: code }).toArray()
+}
+
+export async function getAllImages(): Promise<ImageRecord[]> {
+  return await db.collection('images').find().toArray()
 }
 
 export async function saveImageInDB(code: string, ext: string): Promise<ImageRecord> {
@@ -133,4 +137,11 @@ export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
 
 export async function getUserPassAndUuid(username: string): Promise<null | { password: string; uuid: string }> {
   return await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
+}
+
+export async function checkForStuckHistoricalEntries(): Promise<void> {
+  const result = await db.collection('history').updateMany({ status: 'processing' }, { $set: { status: 'failed', statusDescription: 'Entry stuck or outdated' } })
+  if (result.matchedCount > 0) {
+    console.log(`${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
+  }
 }

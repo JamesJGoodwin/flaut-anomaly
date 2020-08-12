@@ -1,3 +1,5 @@
+import pug from 'pug'
+
 export interface Autocomplete {
     code: string;
     type: 'airport' | 'city';
@@ -365,4 +367,10 @@ declare namespace WebSocketTransfer {
 
     type ServerIncoming = AuthLogin & JWTValidate & AskForLatest & UploadImage & DeleteImage
     type ClientIncoming = GiveJWT & JWTError & AuthResult & UploadImageResult & DeleteImageResult & EntryStatusIncoming & EntryIncoming & HistoryEntries
+}
+
+type PugsKeys = 'anomaly' | 'dashboard'
+
+export type PugTemplates = {
+  [key in PugsKeys]?: pug.compileTemplate
 }
