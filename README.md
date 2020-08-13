@@ -15,4 +15,4 @@ It also has web dashboard which keeps you up to date about what's going on at th
 
 ## TODO
 - User management and access rights (upload images, modify users, etc)
-- Refactor typing for websocket data flow
+- Refactor typings for websocket data flow
