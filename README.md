@@ -10,3 +10,9 @@ It has 3 main stages:
 1. Read a message and parse the URL it contains
 2. Prepare the image using `service.prerender.cloud/screenshot`
 3. Post image to VK.com with corresponding description and direct link to the search page with a ticket
+
+It also has web dashboard which keeps you up to date about what's going on at the server. Built with JWT and WebSocket makes it blazing fast, secure and real-time.
+
+## TODO
+- User management and access rights (upload images, modify users, etc)
+- Refactor typing for websocket data flow
