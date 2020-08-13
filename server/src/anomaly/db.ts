@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import { TicketParser, AllowedStatuses, HistoryEntry, WebSocketTransfer, ImageRecord } from '../../../types'
+import { TicketParser, AllowedStatuses, HistoryEntry, ImageRecord } from '../../../types'
 
 import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
@@ -46,17 +46,17 @@ export async function createHistoricalEntry(data: TicketParser): Promise<{ id: s
     createdAt: new Date()
   }
 
-  entry.id = (await db.collection('history').insertOne(entry)).insertedId
+  entry._id = (await db.collection('history').insertOne(entry)).insertedId
   entry.images = await db.collection('images').findOne({ destination: entry.destination }, { projection: { _id: 0 } })
 
   sendWebsocketData(
     JSON.stringify({
       type: 'new-entry',
       data: { entry }
-    } as WebSocketTransfer.EntryIncoming)
+    })
   )
 
-  return { id: entry.id }
+  return { id: entry._id }
 }
 
 export async function setEntryStatus(id: string, value: AllowedStatuses, descr?: string): Promise<void> {
@@ -71,13 +71,13 @@ export async function setEntryStatus(id: string, value: AllowedStatuses, descr?:
         id: id,
         status: value
       }
-    } as WebSocketTransfer.EntryStatusIncoming)
+    })
   )
 
-  await db.collection('history').findOneAndUpdate({ id }, { $set: { status: value } })
+  await db.collection('history').findOneAndUpdate({ _id: id }, { $set: { status: value } })
 
   if (descr) {
-    await db.collection('history').findOneAndUpdate({ id }, { $set: { statusDescription: descr } })
+    await db.collection('history').findOneAndUpdate({ _id: id }, { $set: { statusDescription: descr } })
   }
 }
 
@@ -99,7 +99,7 @@ export async function saveImageInDB(code: string, ext: string): Promise<ImageRec
       addedAt: new Date()
     }
 
-    entry.id = (await db.collection('images').insertOne(entry)).insertedId
+    entry._id = (await db.collection('images').insertOne(entry)).insertedId
     return entry
   } else {
     const e = new Error('Too much images for this city')

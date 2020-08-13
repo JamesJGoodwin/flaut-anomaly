@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import { HistoryEntry, AllowedStatuses, WebSocketTransfer } from '../../../../types'
+import { HistoryEntry, AllowedStatuses } from '../../../../types'
 
 import { animateFill } from 'tippy.js';
 import Tippy, { TippyProps } from '@tippyjs/react';
@@ -88,12 +88,12 @@ export function Entry(props: Props): JSX.Element {
     acceptedFiles.forEach(file => {
       const reader = new FileReader()
 
-      reader.onloadend = (): void => {
+      reader.onloadend = () => {
         const base64data = reader.result
 
         window.awaitingUploadNotification = true
 
-        const data: WebSocketTransfer.UploadImage = {
+        const data = {
           type: 'upload-image',
           data: {
             base64: base64data as string,
@@ -117,7 +117,7 @@ export function Entry(props: Props): JSX.Element {
   const deleteImage = (name: string): void => {
     window.awaitingDeletionNotification = true
 
-    const data: WebSocketTransfer.DeleteImage = {
+    const data = {
       type: 'delete-image',
       data: {
         name: name
@@ -134,7 +134,7 @@ export function Entry(props: Props): JSX.Element {
       setTimeFromNow(timeSince(new Date(props.entry.createdAt)))
     }, 1000)
 
-    return (): void => clearInterval(interval)
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -199,9 +199,9 @@ export function Entry(props: Props): JSX.Element {
             <div
               className="image col-md-2 col-xs-12 mr-4"
               style={{ backgroundImage: `url(/images/thumbnails/${img.name})` }}
-              key={img.id}
+              key={img._id}
             >
-              <FontAwesomeIcon onClick={(): void => deleteImage(img.name)} icon={faTimes} />
+              <FontAwesomeIcon onClick={() => deleteImage(img.name)} icon={faTimes} />
             </div>
           )}
         </div>

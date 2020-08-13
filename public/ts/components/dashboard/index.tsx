@@ -2,12 +2,17 @@
  * Core Modules
  */
 
-import { WebSocketTransfer } from '../../../../types'
-
-import React, { useEffect, Fragment } from 'react'
+import React, { useEffect, Fragment, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHistory } from '@fortawesome/free-solid-svg-icons'
+import { faHistory, faBell as fasBell } from '@fortawesome/free-solid-svg-icons'
+import { faBell } from '@fortawesome/free-regular-svg-icons'
+import { roundArrow } from 'tippy.js'
+import Tippy from '@tippyjs/react'
+import cx from 'classnames'
+
+import 'tippy.js/dist/svg-arrow.css'
+import 'tippy.js/themes/light.css'
 
 /**
  * Engine Modules
@@ -16,7 +21,7 @@ import { faHistory } from '@fortawesome/free-solid-svg-icons'
 import { sendWebSocketData } from '../../websocket'
 import { Entry as HistoricalEntry } from './historicalEntry'
 import { signOut } from '../../slices/auth'
-import { stateSelector } from '../../slices/dashboard'
+import { stateSelector, clearNotifications } from '../../slices/dashboard'
 
 /**
  * Logic
@@ -25,69 +30,118 @@ import { stateSelector } from '../../slices/dashboard'
 const LIST_SIZE = 20
 
 export const Dashboard = (): JSX.Element => {
-    const dispatch = useDispatch()
-    const { latest } = useSelector(stateSelector)
+  const dispatch = useDispatch()
+  const { latest, notifications } = useSelector(stateSelector)
 
-    useEffect(() => {
-        document.body.classList.add('dashboard')
-        
-        const data: WebSocketTransfer.AskForLatest = {
-            type: 'latest-entries',
-            data: {
-                count: LIST_SIZE
-            }
-        }
-        sendWebSocketData(data)
+  const [code, setCode] = useState('')
 
-        return (): void => document.body.classList.remove('dashboard')
-    }, [dispatch])
+  useEffect(() => {
+    document.body.classList.add('dashboard')
 
-    const handleSignOut = (): void => {
-        localStorage.removeItem('jwt')
-        localStorage.removeItem('uuid')
-
-        dispatch(signOut())
+    const data = {
+      type: 'latest-entries',
+      data: {
+        count: LIST_SIZE
+      }
     }
+    sendWebSocketData(data)
 
-    return (
-        <Fragment>
-            <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-                <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Anomaly</a>
-                <ul className="navbar-nav px-3">
-                    <li className="nav-item text-nowrap">
-                        <a className="nav-link" href="#" onClick={(): void => handleSignOut()}>Sign out</a>
-                    </li>
-                </ul>
-            </nav>
-            <div className="container-fluid">
-                <div className="row">
-                    <nav className="col-md-2 d-none d-md-block sidebar">
-                        <div className="sidebar-sticky">
-                            <ul className="nav flex-column">
-                                <li className="nav-item">
-                                    <FontAwesomeIcon icon={faHistory} />
-                                    <a className="nav-link active" href="#">History</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
-                    <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light">
-                        <div className="pt-3 pb-2 mb-3">
-                            <h1 className="h2">History</h1>
-                            <div className="container-fluid history-holder pt-4">
-                                {latest.map((val, i) => 
-                                    <HistoricalEntry
-                                        key={val.id}
-                                        i={i}
-                                        latestLength={latest.length}
-                                        entry={val}
-                                    />
-                                )}
+    return () => document.body.classList.remove('dashboard')
+  }, [dispatch])
+
+  const handleSignOut = () => {
+    localStorage.removeItem('jwt')
+    localStorage.removeItem('uuid')
+
+    dispatch(signOut())
+  }
+
+  return (
+    <Fragment>
+      <nav id="top-navigation" className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+        <a className="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Anomaly</a>
+        <ul className="navbar-nav px-3 flex-row align-items-center">
+          <li className={cx('nav-item', 'notifications', 'mr-5', { '--animate': notifications.length > 0 })}>
+            <Tippy
+              disabled={notifications.length === 0}
+              trigger="click"
+              interactive={true}
+              arrow={roundArrow}
+              theme="light"
+              offset={[0, 20]}
+              onHidden={() => dispatch(clearNotifications())}
+              content={
+                <div className="notifications-holder">
+                  {notifications.map(x => {
+                    if (x === '2FA') {
+                      return (
+                        <div className="notification two-fa" key={x}>
+                          <p className="description">Facebook 2FA confirmation required</p>
+                          <form className="form-inline" onSubmit={(e: React.FormEvent) => e.preventDefault()}>
+                            <div className="form-group">
+                              <label htmlFor="facebook-2fa">Enter your code:</label>
+                              <input
+                                autoComplete="off"
+                                type="text"
+                                className="form-control ml-3"
+                                id="facebook-2fa"
+                                placeholder="XXXXXX"
+                                value={code}
+                                onChange={(e: React.ChangeEvent) => setCode((e.target as HTMLInputElement).value)}
+                              />
                             </div>
+                            <button
+                              type="submit"
+                              className="btn btn-primary ml-3"
+                              onClick={() => sendWebSocketData({ type: 'server-2fa', data: { code } })}
+                            >Submit</button>
+                          </form>
                         </div>
-                    </main>
+                      )
+                    }
+                  })}
                 </div>
+              }
+            >
+              <span tabIndex={0}>
+                <FontAwesomeIcon icon={notifications.length > 0 ? fasBell : faBell} />
+              </span>
+            </Tippy>
+          </li>
+          <li className="nav-item text-nowrap">
+            <a className="nav-link" href="#" onClick={() => handleSignOut()}>Sign out</a>
+          </li>
+        </ul>
+      </nav>
+      <div className="container-fluid">
+        <div className="row">
+          <nav className="col-md-2 d-none d-md-block sidebar">
+            <div className="sidebar-sticky">
+              <ul className="nav flex-column">
+                <li className="nav-item">
+                  <FontAwesomeIcon icon={faHistory} />
+                  <a className="nav-link active" href="#">History</a>
+                </li>
+              </ul>
             </div>
-        </Fragment>
-    )
+          </nav>
+          <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light">
+            <div className="pt-3 pb-2 mb-3">
+              <h1 className="h2">History</h1>
+              <div className="container-fluid history-holder pt-4">
+                {latest.map((val, i) =>
+                  <HistoricalEntry
+                    key={val._id}
+                    i={i}
+                    latestLength={latest.length}
+                    entry={val}
+                  />
+                )}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </Fragment>
+  )
 }

@@ -6,14 +6,19 @@ import url from 'url'
 import got from 'got'
 import Redis from 'ioredis'
 import dotenv from 'dotenv'
-import readline from 'readline'
+import { EventEmitter } from 'events'
+import { sendWebsocketData } from '../websocket'
 
 const login = require('facebook-chat-api') // eslint-disable-line
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
+dotenv.config()
+
+const redis = new Redis({
+  keyPrefix: 'anomaly_'
 })
+
+// event emitter init
+const eventListener = new EventEmitter()
 
 /**
  * Engine modules
@@ -23,13 +28,9 @@ const rl = readline.createInterface({
  * Logic
  */
 
-dotenv.config()
+export const triggerCodeInput = (code: string): boolean => eventListener.emit('2FA', code)
 
-const redis = new Redis({
-  keyPrefix: 'anomaly_'
-})
-
-export async function initFacebookListener(handler: NodeJS.EventEmitter): Promise<void> {
+export const initFacebookListener = async (handler: NodeJS.EventEmitter): Promise<void> => {
   const facebookAppstateCacheKey = 'facebook_appstate'
   const appstate: string | null = await redis.get(facebookAppstateCacheKey)
 
@@ -40,24 +41,35 @@ export async function initFacebookListener(handler: NodeJS.EventEmitter): Promis
 
   login(credentials, async (err: any, api: any) => {
     if (err) {
+      sendWebsocketData(JSON.stringify({ type: 'notification', data: 'Facebook login failed' }))
+
       switch (err.error) {
         case 'login-approval':
-          console.log('Enter code > ')
-          rl.on('line', line => {
-            err.continue(line)
-            rl.close()
-          })
+          const interval = setInterval(() => {
+            sendWebsocketData(JSON.stringify({ type: 'notification', data: '2FA please' }))
+          }, 2500)
+
+          const codeEnterCallback = (code: string) => {
+            console.log(code)
+            err.continue(code)
+            clearInterval(interval)
+          }
+
+          eventListener.once('2FA', codeEnterCallback)
+
           break
         default:
           if (err.error.startsWith('Error retrieving userID. This can be caused by a lot of things')) {
             await redis.del(facebookAppstateCacheKey)
             console.log('[LOGIN FAIL] Clearing appstate cache...\n')
-            process.exit()
+            process.exit(1)
           }
           console.error(err)
       }
       return
     }
+
+    sendWebsocketData(JSON.stringify({ type: 'notification', data: 'Facebook login successfull!' }))
 
     api.setOptions({
       listenEvents: true

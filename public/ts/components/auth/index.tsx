@@ -8,8 +8,6 @@ import React, { useEffect, useState } from 'react'
  * Engine Modules
  */
 
-import { WebSocketTransfer } from '../../../../types'
-
 import { sendWebSocketData } from '../../websocket'
 
 import '../../../scss/signin.scss'
@@ -25,11 +23,11 @@ export const Authorization = (): JSX.Element => {
     useEffect(() => {
         document.body.classList.add('signin')
 
-        return (): void => document.body.classList.remove('signin')
+        return () => document.body.classList.remove('signin')
     }, [])
 
-    const handleAuth = (): void => {
-        const data: WebSocketTransfer.AuthLogin = {
+    const handleAuth = () => {
+        const data = {
             type: 'authorization',
             data: {
                 login: login,
@@ -53,7 +51,7 @@ export const Authorization = (): JSX.Element => {
                 placeholder="Login"
                 required
                 autoFocus={true}
-                onChange={(): void => { /** */ }}
+                onChange={() => { /** */ }}
             />
             <label htmlFor="inputPassword" className="sr-only">Password</label>
             <input
@@ -64,12 +62,11 @@ export const Authorization = (): JSX.Element => {
                 className="form-control"
                 placeholder="Password"
                 required
-                onChange={(): void => { /** */ }}
             />
             <button
                 className="btn btn-lg btn-primary btn-block"
                 type="submit"
-                onClick={(): void => handleAuth()}
+                onClick={() => handleAuth()}
             >
                 Sign in
             </button>
