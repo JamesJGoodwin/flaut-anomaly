@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import { TicketParser, AllowedStatuses, HistoryEntry, WebSocketTransfer, ImageRecord } from '../../../types'
+import { TicketParser, AllowedStatuses, HistoryEntry, ImageRecord } from '../../../types'
 
 import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
@@ -46,17 +46,17 @@ export async function createHistoricalEntry(data: TicketParser): Promise<{ id: s
     createdAt: new Date()
   }
 
-  entry.id = (await db.collection('history').insertOne(entry)).insertedId
+  entry._id = (await db.collection('history').insertOne(entry)).insertedId
   entry.images = await db.collection('images').findOne({ destination: entry.destination }, { projection: { _id: 0 } })
 
   sendWebsocketData(
     JSON.stringify({
       type: 'new-entry',
       data: { entry }
-    } as WebSocketTransfer.EntryIncoming)
+    })
   )
 
-  return { id: entry.id }
+  return { id: entry._id }
 }
 
 export async function setEntryStatus(id: string, value: AllowedStatuses, descr?: string): Promise<void> {
@@ -71,18 +71,22 @@ export async function setEntryStatus(id: string, value: AllowedStatuses, descr?:
         id: id,
         status: value
       }
-    } as WebSocketTransfer.EntryStatusIncoming)
+    })
   )
 
-  await db.collection('images').findOneAndUpdate({ id }, { $set: { value } })
+  await db.collection('history').findOneAndUpdate({ _id: id }, { $set: { status: value } })
 
   if (descr) {
-    await db.collection('images').findOneAndUpdate({ id }, { $set: { statusDescription: descr } })
+    await db.collection('history').findOneAndUpdate({ _id: id }, { $set: { statusDescription: descr } })
   }
 }
 
 export async function getImages(code: string): Promise<ImageRecord[]> {
   return await db.collection('images').find({ destination: code }).toArray()
+}
+
+export async function getAllImages(): Promise<ImageRecord[]> {
+  return await db.collection('images').find().toArray()
 }
 
 export async function saveImageInDB(code: string, ext: string): Promise<ImageRecord> {
@@ -95,7 +99,7 @@ export async function saveImageInDB(code: string, ext: string): Promise<ImageRec
       addedAt: new Date()
     }
 
-    entry.id = (await db.collection('images').insertOne(entry)).insertedId
+    entry._id = (await db.collection('images').insertOne(entry)).insertedId
     return entry
   } else {
     const e = new Error('Too much images for this city')
@@ -110,28 +114,22 @@ export async function deleteImageRecord(name: string): Promise<void> {
 }
 
 export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
-  const latest: HistoryEntry[] = await db.collection('history').find().sort({ addedAt: -1 }).limit(n).toArray()
+  const latest: HistoryEntry[] = await db.collection('history').find().sort({ createdAt: -1 }).limit(n).toArray()
 
   if (latest.length === 0) return []
 
-  const images: Array<ImageRecord[]> = await db.collection('db').find({
-    $or: [...new Set(latest.map(x => {
-      return { destination: x.destination }
-    }))]
+  const images: ImageRecord[] = await db.collection('images').find({
+    $or: [...new Set(latest.map(x => x.destination))].map(code => { return { destination: code } })
   }).toArray()
 
   latest.forEach(entry => {
     images.forEach(image => {
-      image.forEach(img => {
-        if (entry.destination === img.destination) {
-          entry.images = image
-        }
-      })
-    })
+      if (!entry.images) entry.images = []
 
-    if (!entry.images) {
-      entry.images = []
-    }
+      if (image.destination === entry.destination) {
+        entry.images.push(image)
+      }
+    })
   })
 
   return latest
@@ -139,4 +137,11 @@ export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
 
 export async function getUserPassAndUuid(username: string): Promise<null | { password: string; uuid: string }> {
   return await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
+}
+
+export async function checkForStuckHistoricalEntries(): Promise<void> {
+  const result = await db.collection('history').updateMany({ status: 'processing' }, { $set: { status: 'failed', statusDescription: 'Entry stuck or outdated' } })
+  if (result.matchedCount > 0) {
+    console.log(`${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
+  }
 }

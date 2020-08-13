@@ -24,6 +24,7 @@
     "@babel/core": "^7.11.1",
     "@babel/preset-env": "^7.11.0",
     "@types/bcrypt": "^3.0.0",
+    "@types/classnames": "^2.2.10",
     "@types/express": "^4.17.7",
     "@types/express-http-proxy": "^1.6.1",
     "@types/ioredis": "^4.17.3",
@@ -65,6 +66,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.30",
+    "@fortawesome/free-regular-svg-icons": "^5.14.0",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@reduxjs/toolkit": "^1.4.0",
@@ -73,6 +75,7 @@
     "@types/sharp": "^0.25.1",
     "bcrypt": "^5.0.0",
     "bootstrap": "^4.5.2",
+    "classnames": "^2.2.6",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-http-proxy": "^1.6.2",

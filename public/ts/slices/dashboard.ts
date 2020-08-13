@@ -1,83 +1,86 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { HistoryEntry, WebSocketTransfer } from '../../../types'
+import { HistoryEntry } from '../../../types'
 
 import { RootState } from './index'
 
 interface DashboardState {
-    latest: HistoryEntry[];
+  latest: HistoryEntry[]
+  notifications: Array<string>
 }
 
 const initialState: DashboardState = {
-    latest: []
+  latest: [],
+  notifications: []
 }
 
 const LIST_SIZE = 20
 
 const dashboardSlice = createSlice({
-    name: 'dashboard',
-    initialState,
-    reducers: {
-        setLatest: (state, { payload }: { payload: HistoryEntry[] }): void => {
-            state.latest = payload
-        },
-        addLatest: (state, { payload }: { payload: HistoryEntry }): void => {
-            const newLatest = [...state.latest]
+  name: 'dashboard',
+  initialState,
+  reducers: {
+    setLatest: (state, { payload }: { payload: HistoryEntry[] }): void => {
+      state.latest = payload
+    },
+    addLatest: (state, { payload }: { payload: HistoryEntry }): void => {
+      if (state.latest.length === LIST_SIZE) {
+        state.latest.pop()
+      }
 
-            if (newLatest.length === LIST_SIZE) {
-                newLatest.pop()
-            }
+      state.latest.unshift(payload)
+    },
+    setEntryStatus: (state, { payload }): void => {
+      for (const x of state.latest) {
+        if (x._id === payload.id) {
+          x.status = payload.status
 
-            newLatest.unshift(payload)
-
-            state.latest = newLatest
-        },
-        setEntryStatus: (state, { payload }: { payload: WebSocketTransfer.EntryStatusBody }): void => {
-            const newEntriesList = [...state.latest]
-
-            for (const x of newEntriesList) {
-                if (x.id === payload.id) {
-                    x.status = payload.status
-
-                    if (x.statusDescription) {
-                        x.statusDescription = payload.statusDescription
-                    }
-                }
-            }
-
-            state.latest = newEntriesList
-        },
-        addNewImage: (state, { payload }: { payload: WebSocketTransfer.UploadImageBody }): void => {
-            const latestCopy = [...state.latest]
-
-            for (const l of latestCopy) {
-                if (l.fullInfo.segments[0].destination.cityCode === payload.image.destination) {
-                    l.images.push(payload.image)
-                }
-            }
-
-            state.latest = latestCopy
-        },
-        removeImage: (state, { payload }: { payload: WebSocketTransfer.DeleteImageBody }): void => {
-            const latestCopy = [...state.latest]
-            const dest = payload.name.split('').splice(0, 3).join('')
-
-            for (const l of latestCopy) {
-                if (l.destination === dest) {
-                    for (let i = 0; i < l.images.length; i++) {
-                        if (payload.name === l.images[i].name) {
-                            l.images.splice(i, 1)
-                        }
-                    }
-                }
-            }
-
-            state.latest = latestCopy
+          if (x.statusDescription) {
+            x.statusDescription = payload.statusDescription
+          }
         }
+      }
+    },
+    addNewImage: (state, { payload }): void => {
+      for (const x of state.latest) {
+        if (x.fullInfo.segments[0].destination.cityCode === payload.image.destination) {
+          x.images.push(payload.image)
+        }
+      }
+    },
+    removeImage: (state, { payload }): void => {
+      const dest = payload.name.split('').splice(0, 3).join('')
+
+      for (const x of state.latest) {
+        if (x.destination === dest) {
+          for (let i = 0; i < x.images.length; i++) {
+            if (payload.name === x.images[i].name) {
+              x.images.splice(i, 1)
+            }
+          }
+        }
+      }
+    },
+    addNotification: (state, { payload }: { payload: '2FA' }) => {
+      if (!state.notifications.includes(payload)) {
+        state.notifications.push(payload)
+      }
+    },
+    clearNotifications: state => {
+      state.notifications = []
     }
+  }
 })
 
 export const stateSelector = (state: RootState): DashboardState => state.dashboard
 
-export const { setLatest, addLatest, setEntryStatus, addNewImage, removeImage } = dashboardSlice.actions
+export const {
+  setLatest,
+  addLatest,
+  setEntryStatus,
+  addNewImage,
+  removeImage,
+  addNotification,
+  clearNotifications
+} = dashboardSlice.actions
 
 export default dashboardSlice.reducer

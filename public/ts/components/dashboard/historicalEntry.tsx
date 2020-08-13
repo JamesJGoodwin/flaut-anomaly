@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import { HistoryEntry, AllowedStatuses, WebSocketTransfer } from '../../../../types'
+import { HistoryEntry, AllowedStatuses } from '../../../../types'
 
 import { animateFill } from 'tippy.js';
 import Tippy, { TippyProps } from '@tippyjs/react';
@@ -10,6 +10,7 @@ import React, { useState, useEffect, Fragment, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { useDropzone } from 'react-dropzone'
+import cx from 'classnames'
 
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/dist/backdrop.css';
@@ -87,12 +88,12 @@ export function Entry(props: Props): JSX.Element {
     acceptedFiles.forEach(file => {
       const reader = new FileReader()
 
-      reader.onloadend = (): void => {
+      reader.onloadend = () => {
         const base64data = reader.result
 
         window.awaitingUploadNotification = true
 
-        const data: WebSocketTransfer.UploadImage = {
+        const data = {
           type: 'upload-image',
           data: {
             base64: base64data as string,
@@ -116,7 +117,7 @@ export function Entry(props: Props): JSX.Element {
   const deleteImage = (name: string): void => {
     window.awaitingDeletionNotification = true
 
-    const data: WebSocketTransfer.DeleteImage = {
+    const data = {
       type: 'delete-image',
       data: {
         name: name
@@ -133,11 +134,11 @@ export function Entry(props: Props): JSX.Element {
       setTimeFromNow(timeSince(new Date(props.entry.createdAt)))
     }, 1000)
 
-    return (): void => clearInterval(interval)
+    return () => clearInterval(interval)
   }, [])
 
   return (
-    <div className={['card', props.i + 1 < props.latestLength ? 'mb-3' : '', stage, , isDragActive ? 'dragged' : ''].join(' ')}>
+    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength, dragged: isDragActive })}>
       <div className="card-header text-muted bg-white">
         {timeFromNow + ' назад'}
       </div>
@@ -198,9 +199,9 @@ export function Entry(props: Props): JSX.Element {
             <div
               className="image col-md-2 col-xs-12 mr-4"
               style={{ backgroundImage: `url(/images/thumbnails/${img.name})` }}
-              key={img.id}
+              key={img._id}
             >
-              <FontAwesomeIcon onClick={(): void => deleteImage(img.name)} icon={faTimes} />
+              <FontAwesomeIcon onClick={() => deleteImage(img.name)} icon={faTimes} />
             </div>
           )}
         </div>

@@ -1,56 +1,103 @@
 .sidebar {
-    position: fixed;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0 0; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+
+  .sidebar-sticky {
+    position: relative;
     top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 100; /* Behind the navbar */
-    padding: 48px 0 0; /* Height of navbar */
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    height: calc(100vh - 48px);
+    padding-top: 0.5rem;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
 
-    .sidebar-sticky {
-        position: relative;
-        top: 0;
-        height: calc(100vh - 48px);
-        padding-top: .5rem;
-        overflow-x: hidden;
-        overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-
-        @supports ((position: -webkit-sticky) or (position: sticky)) {
-            position: -webkit-sticky;
-            position: sticky;
-        }
-
-        li.nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0 0 0 10px;
-
-            .nav-link {
-                font-weight: 500;
-                color: #333;
-    
-                &.active {
-                    color: #007bff;
-                }
-            }
-        }
+    @supports ((position: -webkit-sticky) or (position: sticky)) {
+      position: -webkit-sticky;
+      position: sticky;
     }
+
+    li.nav-item {
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 10px;
+
+      .nav-link {
+        font-weight: 500;
+        color: #333;
+
+        &.active {
+          color: #007bff;
+        }
+      }
+    }
+  }
+}
+
+#top-navigation {
+  ul.navbar-nav {
+    li.notifications {
+      span {
+        outline: none;
+      }
+
+      svg.fa-bell {
+        color: #9e9e9e;
+        cursor: pointer;
+      }
+
+      &.--animate {
+        svg.fa-bell {
+          animation: ring 4s 0.7s ease-in-out infinite;
+          transform-origin: 50% 4px;
+          color: #f57c00;
+        }
+      }
+    }
+  }
+
+  .notifications-holder {
+    .notification {
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+
+      .description {
+        color: #90a4ae;
+        text-align: center;
+        font-size: 16px;
+      }
+
+      &.two-fa {
+        input {
+          max-width: 85px !important;
+        }
+      }
+
+      &:not(:last-child) {
+        margin-bottom: 10px;
+      }
+    }
+  }
 }
 
 .navbar {
-    a.navbar-brand {
-        @media (min-width: 0) and (max-width: 768px) {
-            width: 50% !important;
-        }
+  a.navbar-brand {
+    @media (min-width: 0) and (max-width: 768px) {
+      width: 50% !important;
     }
+  }
 }
 
 /*
 * Content
 */
-  
+
 [role="main"] {
-    padding-top: 48px; /* Space for fixed navbar */
+  padding-top: 48px; /* Space for fixed navbar */
 }
 
 /**
@@ -58,73 +105,73 @@
 */
 
 .history-holder {
-    .card {
-        transition: transform .3s ease, opacity .3s ease;
-        min-height: 90px;
-        border-radius: 8px;
-        
-        &.entering {
-            transform: translateY(-15px) scale(.9);
-            opacity: 0;
-        }
+  .card {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    min-height: 90px;
+    border-radius: 8px;
 
-        &.dragged {
-            border-style: dashed;
-            border-width: 2px;
-        }
-
-        .card-header {
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            border-top-left-radius: inherit;
-            border-top-right-radius: inherit;
-        }
-
-        .card-body {
-            @media (min-width: 0) and (max-width: 768px) {
-                flex-direction: column;
-            }
-
-            .image-holder {
-                img {
-                    @media (min-width: 0) and (max-width: 768px) {
-                        height: 50px;
-                        width: auto !important;
-                        margin-bottom: 10px;
-                    }
-                }
-            }
-
-            .route {
-                @media (min-width: 0) and (max-width: 768px) {
-                    flex-direction: column;
-                }
-            }
-        }
-
-        .images-holder {
-            .image {
-                background-repeat: no-repeat;
-                background-size: cover;
-                background-position: 50% 50%;
-                height: 100px;
-                width: 100%;
-                border-radius: 10px;
-                box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
-                position: relative;
-
-                > svg {
-                    position: absolute;
-                    right: 3px;
-                    top: 3px;
-                    background: #fff;
-                    padding: 0px;
-                    border-radius: 50%;
-                    width: 18px;
-                    height: 18px;
-                    cursor: pointer;
-                }
-            }
-        }
+    &.entering {
+      transform: translateY(-15px) scale(0.9);
+      opacity: 0;
     }
+
+    &.dragged {
+      border-style: dashed;
+      border-width: 2px;
+    }
+
+    .card-header {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+    }
+
+    .card-body {
+      @media (min-width: 0) and (max-width: 768px) {
+        flex-direction: column;
+      }
+
+      .image-holder {
+        img {
+          @media (min-width: 0) and (max-width: 768px) {
+            height: 50px;
+            width: auto !important;
+            margin-bottom: 10px;
+          }
+        }
+      }
+
+      .route {
+        @media (min-width: 0) and (max-width: 768px) {
+          flex-direction: column;
+        }
+      }
+    }
+
+    .images-holder {
+      .image {
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: 50% 50%;
+        height: 100px;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+        position: relative;
+
+        > svg {
+          position: absolute;
+          right: 3px;
+          top: 3px;
+          background: #fff;
+          padding: 0px;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
 }

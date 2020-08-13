@@ -18,6 +18,7 @@ import App from './App'
 import store from './store'
 
 import '../scss/dashboard.scss'
+import '../scss/animations.scss'
 
 /**
  * Logic

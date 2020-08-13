@@ -2,8 +2,6 @@
  * Core Modules
  */
 
-import { WebSocketTransfer } from '../../types'
-
 import React, { Fragment, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
@@ -35,7 +33,7 @@ const App = (): JSX.Element => {
         if ('jwt' in localStorage) {
             const initial = setInterval(() => {
                 if (window.ws.readyState === 1) {
-                    const data: WebSocketTransfer.JWTValidate = {
+                    const data = {
                         type: 'authentication',
                         data: {
                             jwt: localStorage.getItem('jwt'),

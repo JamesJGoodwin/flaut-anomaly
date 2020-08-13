@@ -14,7 +14,7 @@ export function Loader(): JSX.Element {
     useEffect(() => {
         document.body.classList.add('loading')
 
-        return (): void => document.body.classList.remove('loading')
+        return () => document.body.classList.remove('loading')
     }, [])
 
     return (

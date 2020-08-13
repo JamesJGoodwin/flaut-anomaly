@@ -1,3 +1,5 @@
+import pug from 'pug'
+
 export interface Autocomplete {
     code: string;
     type: 'airport' | 'city';
@@ -209,7 +211,7 @@ export interface Latest {
 export type AllowedStatuses = 'processing' | 'declined' | 'failed' | 'succeeded'
 
 export interface HistoryEntry {
-    id?: string;
+    _id?: string;
     origin: string;
     destination: string;
     departureDate: Date;
@@ -245,124 +247,14 @@ declare global {
 }
 
 export interface ImageRecord {
-    id?: string;
+    _id?: string;
     destination: string;
     addedAt: Date;
     name: string;
 }
 
-declare namespace WebSocketTransfer {
-    type TransferTypes = 'authorization'
-                        | 'authentication'
-                        | 'latest-entries'
-                        | 'new-entry'
-                        | 'entry-status-update'
-                        | 'upload-image'
-                        | 'delete-image'
-    type AuthResults = 'error' | 'success'
+type PugsKeys = 'anomaly' | 'dashboard'
 
-    interface MainBody {
-        type: TransferTypes;
-    }
-
-    interface AuthLogin extends MainBody {
-        data: {
-            login: string;
-            password: string;
-        };
-    }
-
-    interface JWTValidate extends MainBody {
-        data: {
-            jwt: string;
-            uuid: string;
-        };
-    }
-
-    interface AuthResult extends MainBody {
-        data: {
-            result: AuthResults;
-            reason?: string;
-        };
-    }
-
-    interface GiveJWT extends MainBody {
-        data: {
-            result: AuthResults;
-            payload: {
-                uuid: string;
-                jwt: string;
-            };
-        };
-    }
-
-    interface JWTError extends MainBody {
-        data: {
-            result: AuthResults;
-            reason: string;
-        };
-    }
-
-    interface HistoryEntries extends MainBody {
-        data: Array<HistoryEntry>;
-    }
-
-    interface AskForLatest extends MainBody {
-        data: {
-            count: number;
-        };
-    }
-
-    interface EntryIncoming extends MainBody {
-        data: {
-            entry: HistoryEntry;
-        };
-    }
-
-    interface EntryStatusBody {
-        id: string;
-        status: AllowedStatuses;
-        statusDescription?: string;
-    }
-
-    interface EntryStatusIncoming extends MainBody {
-        data: EntryStatusBody;
-    }
-
-    interface UploadImage extends MainBody {
-        data: {
-            base64: string;
-            mimeType: string;
-            destinationCode: string;
-        };
-    }
-
-    interface UploadImageBody {
-        result: AuthResults;
-        image: ImageRecord;
-        reason?: string;
-    }
-
-    interface UploadImageResult extends MainBody {
-        data: UploadImageBody;
-    }
-
-    interface DeleteImage extends MainBody {
-        data: {
-            name: string;
-        };
-    }
-
-    interface DeleteImageBody {
-        result: AuthResults;
-        name: string;
-        reason?: string;
-    }
-
-    interface DeleteImageResult extends MainBody {
-        data: DeleteImageBody;
-    }
-
-    type ServerIncoming = AuthLogin & JWTValidate & AskForLatest & UploadImage & DeleteImage
-    type ClientIncoming = GiveJWT & JWTError & AuthResult & UploadImageResult & DeleteImageResult & EntryStatusIncoming & EntryIncoming & HistoryEntries
+export type PugTemplates = {
+  [key in PugsKeys]?: pug.compileTemplate
 }
