@@ -142,6 +142,6 @@ export async function getUserPassAndUuid(username: string): Promise<null | { pas
 export async function checkForStuckHistoricalEntries(): Promise<void> {
   const result = await db.collection('history').updateMany({ status: 'processing' }, { $set: { status: 'failed', statusDescription: 'Entry stuck or outdated' } })
   if (result.matchedCount > 0) {
-    console.log(`${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
+    console.log('[app] \x1b[33m%s\x1b[0m', `${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
   }
 }

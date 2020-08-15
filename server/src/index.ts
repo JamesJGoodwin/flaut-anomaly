@@ -49,6 +49,7 @@ app.use('/proxy', proxy('https://api.vk.com', {
   proxyReqPathResolver: req => req.originalUrl.replace('/proxy/', '')
 }))
 
+app.use(express.urlencoded({ extended: true }))
 app.use('/images', express.static('images'))
 app.use(express.static('public'))
 
@@ -64,6 +65,10 @@ app.get('/render', async (req, res) => {
   }
 })
 
+app.post('/upload', async (req, res) => {
+  console.log(req.body)
+})
+
 app.get('/', async (req, res) => {
   try {
     const resp = await dashboard(pugs.dashboard)
@@ -74,15 +79,14 @@ app.get('/', async (req, res) => {
   }
 })
 
-app.listen(parseInt(process.env.EXPRESS_PORT), 'localhost', () => {
-  console.log('Express server is up and running...')
+console.log('[app] running pre-startup checks...')
+
+checkVKApiAvailability().then(async () => {
+  await checkForStuckHistoricalEntries()
+  await checkImagesDatabaseIntegrity()
+  console.log('[app] \x1b[32m%s\x1b[0m', 'all checks passed, starting express and websocket servers...')
   initWebSocket()
-  console.log('Websocket server is up and running...')
   initProcessor()
-  // check if vk.com API is available (usefull for development process in Ukraine)
-  checkVKApiAvailability()
-  // check for stuck historical entries with status "processing"
-  checkForStuckHistoricalEntries()
-  //
-  checkImagesDatabaseIntegrity()
+
+  app.listen(parseInt(process.env.EXPRESS_PORT), 'localhost', () => console.log('[app] ready'))
 })

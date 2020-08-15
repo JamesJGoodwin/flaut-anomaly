@@ -84,29 +84,24 @@ export function Entry(props: Props): JSX.Element {
   const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.createdAt)))
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach(file => {
+    const form = new FormData()
+
+    acceptedFiles.forEach((file, i) => {
       const reader = new FileReader()
 
       reader.onloadend = () => {
-        const base64data = reader.result
+        form.append(`${props.entry.destination}-${i}`, reader.result as string)
 
-        window.awaitingUploadNotification = true
-
-        const data = {
-          type: 'upload-image',
-          data: {
-            base64: base64data as string,
-            mimeType: file.type,
-            destinationCode: props.entry.fullInfo.segments[0].destination.cityCode
-          }
+        if (!window.awaitingUploadNotification) {
+          window.awaitingUploadNotification = true
         }
-
-        sendWebSocketData(data)
       }
 
       reader.readAsDataURL(file)
     })
-  }, [])
+
+    fetch('/upload', { method: 'POST', body: form })
+  }, [props.entry.destination])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: 'image/jpeg, image/png, image/webp',
