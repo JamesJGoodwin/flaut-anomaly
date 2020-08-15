@@ -82,6 +82,9 @@ app.get('/', async (req, res) => {
 console.log('[app] running pre-startup checks...')
 
 checkVKApiAvailability().then(async () => {
+  const thumbnailsDir = path.resolve(__dirname, '../../images/thumbnails')
+  if (!fs.existsSync(thumbnailsDir)) fs.mkdirSync(thumbnailsDir)
+
   await checkForStuckHistoricalEntries()
   await checkImagesDatabaseIntegrity()
   console.log('[app] \x1b[32m%s\x1b[0m', 'all checks passed, starting express and websocket servers...')
