@@ -5,6 +5,7 @@
         "target": "esnext",
         "outDir": "./build/",
         "rootDir": "./src/",
-        "baseUrl": "../"
+        "baseUrl": "../",
+        "sourceMap": true
     }
 }

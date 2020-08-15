@@ -34,7 +34,6 @@ interface Props {
 }
 
 const TippyOptions: TippyProps = {
-  arrow: 'round',
   popperOptions: {
     modifiers: [{
       name: 'computeStyles',
