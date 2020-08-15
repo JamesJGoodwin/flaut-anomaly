@@ -1,6 +1,7 @@
 /**
  * Core Modules
  */
+import { ImageRecord } from '../../types'
 
 import path from 'path'
 import bcrypt from 'bcrypt'
@@ -15,7 +16,7 @@ sharp.cache(false)
  * Engine Modules
  */
 
-import { getUserPassAndUuid, getRecentEntries, saveImageInDB, deleteImageRecord } from './anomaly/db'
+import { getUserPassAndUuid, getRecentEntries, deleteImageRecord } from './anomaly/db'
 import { signJwt, verifyJwt } from './jwt'
 import { triggerCodeInput } from './anomaly/listener'
 
@@ -32,6 +33,22 @@ interface WebSocketWithPing extends WebSocket {
 
 const wss = new WebSocket.Server({ port: 8888 })
 const eventListener = new EventEmitter()
+
+export const notifyClientAboutImageUpload = (image: ImageRecord): void => {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          type: 'upload-image',
+          data: {
+            result: 'success',
+            image: image
+          }
+        })
+      )
+    }
+  })
+}
 
 export function sendWebsocketData(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
   eventListener.emit('send', data)
@@ -148,46 +165,6 @@ export function init(): void {
               data: latest
             })
           )
-        } else if (parsed.type === 'upload-image') {
-          try {
-            const ext = parsed.data.mimeType.replace('image/', '')
-            const image = await saveImageInDB(parsed.data.destinationCode, ext)
-            const filepath = path.resolve(__dirname, '../../images/' + image.name)
-            const thumbPath = path.resolve(__dirname, '../../images/thumbnails/' + image.name)
-
-            await fs.writeFile(
-              filepath,
-              parsed.data.base64.replace(/^data:image\/(png|webp|jpe?g);base64,/, ''),
-              { encoding: 'base64' }
-            )
-
-            await sharp(filepath).resize(300).toFile(thumbPath)
-
-            wss.clients.forEach(client => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(
-                  JSON.stringify({
-                    type: 'upload-image',
-                    data: {
-                      result: 'success',
-                      image: image
-                    }
-                  })
-                )
-              }
-            })
-          } catch (e) {
-            console.error(e)
-            return ws.send(
-              JSON.stringify({
-                type: 'upload-image',
-                data: {
-                  result: 'error',
-                  reason: `[${e.name}] ${e.message}`
-                }
-              })
-            )
-          }
         } else if (parsed.type === 'delete-image') {
           try {
             await fs.unlink(path.resolve(__dirname, '../../images/' + parsed.data.name))

@@ -186,7 +186,7 @@ export async function checkImagesDatabaseIntegrity(): Promise<void> {
   for (let i = 0; i < images.length; i++) {
     const img = images[i]
     if (!dbEntries.includes(img)) {
-      await saveImageInDB(img.split('-')[0], img.split('.')[1])
+      await saveImageInDB(img)
       imagesAddedFromDisk++
     }
   }

@@ -67,7 +67,7 @@ const onMessage = (ev: MessageEvent): void => {
             showErrorToast(message.data.reason)
           } else {
             store.dispatch(addNewImage(message.data))
-            showSuccessToast(`Image '${message.data.image.name}' uploaded`)
+            showSuccessToast(`Image '${message.data.image.name}' uploaded`, 2000)
           }
 
           delete window.awaitingUploadNotification
@@ -78,7 +78,7 @@ const onMessage = (ev: MessageEvent): void => {
             showErrorToast(message.data.reason)
           } else {
             store.dispatch(removeImage(message.data))
-            showSuccessToast(`Image ${message.data.name} has been deleted`)
+            showSuccessToast(`Image ${message.data.name} has been deleted`, 2000)
           }
 
           delete window.awaitingDeletionNotification
@@ -96,7 +96,7 @@ const onMessage = (ev: MessageEvent): void => {
           showErrorToast(message.data)
         }
         if (message.data === 'Facebook login successfull!') {
-          showSuccessToast(message.data)
+          showSuccessToast(message.data, 1000)
           store.dispatch(clearNotifications())
         }
         if (message.data === '2FA please') {

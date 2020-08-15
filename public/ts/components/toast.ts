@@ -12,10 +12,10 @@ import { toast } from 'react-toastify'
  * Logic
  */
 
-export const showErrorToast = (msg: string): void => {
+export const showErrorToast = (msg: string, duration?: number): void => {
     toast.error(msg, {
         position: 'top-right',
-        autoClose: 5000,
+        autoClose: duration || 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,

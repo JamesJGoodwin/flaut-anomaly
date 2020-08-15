@@ -68,9 +68,9 @@ export async function setEntryStatus(id: string, value: AllowedStatuses, descr?:
         status: value,
         statusDescription: descr
       } : {
-        id: id,
-        status: value
-      }
+          id: id,
+          status: value
+        }
     })
   )
 
@@ -89,24 +89,15 @@ export async function getAllImages(): Promise<ImageRecord[]> {
   return await db.collection('images').find().toArray()
 }
 
-export async function saveImageInDB(code: string, ext: string): Promise<ImageRecord> {
-  const images = await getImages(code)
-
-  if (images.length < 6) {
-    const entry: ImageRecord = {
-      name: `${code}-${images.length + 1}.${ext}`,
-      destination: code,
-      addedAt: new Date()
-    }
-
-    entry._id = (await db.collection('images').insertOne(entry)).insertedId
-    return entry
-  } else {
-    const e = new Error('Too much images for this city')
-    e.name = 'CityCountErr'
-
-    throw e
+export async function saveImageInDB(name: string): Promise<ImageRecord> {
+  const entry: ImageRecord = {
+    name,
+    destination: name.split('_')[0],
+    addedAt: new Date()
   }
+
+  entry._id = (await db.collection('images').insertOne(entry)).insertedId
+  return entry
 }
 
 export async function deleteImageRecord(name: string): Promise<void> {
@@ -123,9 +114,9 @@ export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
   }).toArray()
 
   latest.forEach(entry => {
+    if (!entry.images) entry.images = []
+    
     images.forEach(image => {
-      if (!entry.images) entry.images = []
-
       if (image.destination === entry.destination) {
         entry.images.push(image)
       }

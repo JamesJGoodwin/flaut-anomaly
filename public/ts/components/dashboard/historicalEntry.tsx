@@ -21,6 +21,7 @@ import 'tippy.js/animations/shift-away.css';
  */
 
 import { sendWebSocketData } from '../../websocket'
+import { showSuccessToast, showErrorToast } from '../toast'
 
 
 /**
@@ -84,23 +85,31 @@ export function Entry(props: Props): JSX.Element {
   const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.createdAt)))
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const form = new FormData()
-
     acceptedFiles.forEach((file, i) => {
       const reader = new FileReader()
 
-      reader.onloadend = () => {
-        form.append(`${props.entry.destination}-${i}`, reader.result as string)
-
+      reader.onloadend = async () => {
         if (!window.awaitingUploadNotification) {
           window.awaitingUploadNotification = true
+        }
+
+        const res = await fetch('/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            [`${props.entry.destination}`]: reader.result as string
+          })
+        })
+
+        if (!res.ok) {
+          showErrorToast(`${res.status} ${res.statusText}`)
         }
       }
 
       reader.readAsDataURL(file)
     })
-
-    fetch('/upload', { method: 'POST', body: form })
   }, [props.entry.destination])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
