@@ -47,7 +47,7 @@ export async function createHistoricalEntry(data: TicketParser): Promise<{ id: s
   }
 
   entry._id = (await db.collection('history').insertOne(entry)).insertedId
-  entry.images = await db.collection('images').findOne({ destination: entry.destination }, { projection: { _id: 0 } })
+  entry.images = await db.collection('images').find({ destination: entry.destination }).toArray()
 
   sendWebsocketData(
     JSON.stringify({

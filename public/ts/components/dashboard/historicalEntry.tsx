@@ -90,7 +90,9 @@ export function Entry(props: Props): JSX.Element {
 
       reader.onloadend = async () => {
         if (!window.awaitingUploadNotification) {
-          window.awaitingUploadNotification = true
+          window.awaitingUploadNotification = [true]
+        } else {
+          window.awaitingUploadNotification.push(true)
         }
 
         const res = await fetch('/upload', {

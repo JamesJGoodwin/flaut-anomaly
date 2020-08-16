@@ -76,6 +76,7 @@ app.post('/upload', async (req, res) => {
     const imagePath = path.resolve(__dirname, '../../images')
     const thumbnailPath = path.resolve(__dirname, '../../images/thumbnails')
 
+    if (!fs.existsSync(imagePath)) fs.mkdirSync(imagePath)
     if (!fs.existsSync(thumbnailPath)) fs.mkdirSync(thumbnailPath)
 
     const record = await saveImageInDB(imageName)

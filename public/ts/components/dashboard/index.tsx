@@ -53,8 +53,6 @@ export const Dashboard = (): JSX.Element => {
           }
         })
 
-        console.log(skips)
-
         skips.current++
       }
     }
