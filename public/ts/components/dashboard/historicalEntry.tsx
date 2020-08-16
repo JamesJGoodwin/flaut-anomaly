@@ -21,7 +21,7 @@ import 'tippy.js/animations/shift-away.css';
  */
 
 import { sendWebSocketData } from '../../websocket'
-import { showSuccessToast, showErrorToast } from '../toast'
+import { showErrorToast } from '../toast'
 
 
 /**
