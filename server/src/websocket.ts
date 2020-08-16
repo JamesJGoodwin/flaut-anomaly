@@ -157,7 +157,7 @@ export function init(): void {
             }
           }
         } else if (parsed.type === 'latest-entries') {
-          const latest = await getRecentEntries(parsed.data.count || 20)
+          const latest = await getRecentEntries(parsed.data.count || 20, parsed.data.skip || 0)
 
           return ws.send(
             JSON.stringify({

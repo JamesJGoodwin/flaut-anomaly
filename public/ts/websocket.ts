@@ -14,7 +14,7 @@ import {
   setAuthenticationSucceeded
 } from './slices/auth'
 
-import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications } from './slices/dashboard'
+import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications, addSomeLatests } from './slices/dashboard'
 
 
 import store from './store'
@@ -84,7 +84,16 @@ const onMessage = (ev: MessageEvent): void => {
           delete window.awaitingDeletionNotification
         }
       } else if (message.type === 'latest-entries') {
-        store.dispatch(setLatest(message.data))
+        if (window.awaitingAdditionalLatests) {
+          if (message.data.length === 0) {
+            window.awaitingAdditionalLatests = true
+          } else {
+            store.dispatch(addSomeLatests(message.data))
+            window.awaitingAdditionalLatests = false
+          }
+        } else {
+          store.dispatch(setLatest(message.data))
+        }
       } else if (message.type === 'new-entry') {
         newEntrySound.play()
 

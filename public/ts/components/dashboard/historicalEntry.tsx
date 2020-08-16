@@ -131,7 +131,7 @@ export function Entry(props: Props): JSX.Element {
   }
 
   useEffect(() => {
-    setTimeout(() => setStage('entered'), props.i * 50)
+    setTimeout(() => setStage('entered'), 200)
 
     const interval = setInterval(() => {
       setTimeFromNow(timeSince(new Date(props.entry.createdAt)))
