@@ -68,9 +68,9 @@ export async function setEntryStatus(id: string, value: AllowedStatuses, descr?:
         status: value,
         statusDescription: descr
       } : {
-        id: id,
-        status: value
-      }
+          id: id,
+          status: value
+        }
     })
   )
 
@@ -89,32 +89,23 @@ export async function getAllImages(): Promise<ImageRecord[]> {
   return await db.collection('images').find().toArray()
 }
 
-export async function saveImageInDB(code: string, ext: string): Promise<ImageRecord> {
-  const images = await getImages(code)
-
-  if (images.length < 6) {
-    const entry: ImageRecord = {
-      name: `${code}-${images.length + 1}.${ext}`,
-      destination: code,
-      addedAt: new Date()
-    }
-
-    entry._id = (await db.collection('images').insertOne(entry)).insertedId
-    return entry
-  } else {
-    const e = new Error('Too much images for this city')
-    e.name = 'CityCountErr'
-
-    throw e
+export async function saveImageInDB(name: string): Promise<ImageRecord> {
+  const entry: ImageRecord = {
+    name,
+    destination: name.split('_')[0],
+    addedAt: new Date()
   }
+
+  entry._id = (await db.collection('images').insertOne(entry)).insertedId
+  return entry
 }
 
 export async function deleteImageRecord(name: string): Promise<void> {
   await db.collection('images').findOneAndDelete({ name })
 }
 
-export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
-  const latest: HistoryEntry[] = await db.collection('history').find().sort({ createdAt: -1 }).limit(n).toArray()
+export async function getRecentEntries(n: number, skip?: number): Promise<HistoryEntry[]> {
+  const latest: HistoryEntry[] = await db.collection('history').find().skip(skip || 0).sort({ createdAt: -1 }).limit(n).toArray()
 
   if (latest.length === 0) return []
 
@@ -123,9 +114,9 @@ export async function getRecentEntries(n: number): Promise<HistoryEntry[]> {
   }).toArray()
 
   latest.forEach(entry => {
-    images.forEach(image => {
-      if (!entry.images) entry.images = []
+    if (!entry.images) entry.images = []
 
+    images.forEach(image => {
       if (image.destination === entry.destination) {
         entry.images.push(image)
       }
@@ -142,6 +133,6 @@ export async function getUserPassAndUuid(username: string): Promise<null | { pas
 export async function checkForStuckHistoricalEntries(): Promise<void> {
   const result = await db.collection('history').updateMany({ status: 'processing' }, { $set: { status: 'failed', statusDescription: 'Entry stuck or outdated' } })
   if (result.matchedCount > 0) {
-    console.log(`${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
+    console.log('[app] \x1b[33m%s\x1b[0m', `${result.matchedCount} stuck/outdated entries found, ${result.modifiedCount} were fixed`)
   }
 }

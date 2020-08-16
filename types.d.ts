@@ -243,6 +243,7 @@ declare global {
         startWebSocket(): void;
         awaitingUploadNotification: boolean;
         awaitingDeletionNotification: boolean;
+        awaitingAdditionalLatests: boolean;
     }
 }
 

@@ -21,6 +21,7 @@ import 'tippy.js/animations/shift-away.css';
  */
 
 import { sendWebSocketData } from '../../websocket'
+import { showErrorToast } from '../toast'
 
 
 /**
@@ -34,7 +35,6 @@ interface Props {
 }
 
 const TippyOptions: TippyProps = {
-  arrow: 'round',
   popperOptions: {
     modifiers: [{
       name: 'computeStyles',
@@ -85,29 +85,32 @@ export function Entry(props: Props): JSX.Element {
   const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.createdAt)))
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach(file => {
+    acceptedFiles.forEach((file, i) => {
       const reader = new FileReader()
 
-      reader.onloadend = () => {
-        const base64data = reader.result
-
-        window.awaitingUploadNotification = true
-
-        const data = {
-          type: 'upload-image',
-          data: {
-            base64: base64data as string,
-            mimeType: file.type,
-            destinationCode: props.entry.fullInfo.segments[0].destination.cityCode
-          }
+      reader.onloadend = async () => {
+        if (!window.awaitingUploadNotification) {
+          window.awaitingUploadNotification = true
         }
 
-        sendWebSocketData(data)
+        const res = await fetch('/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            [`${props.entry.destination}`]: reader.result as string
+          })
+        })
+
+        if (!res.ok) {
+          showErrorToast(`${res.status} ${res.statusText}`)
+        }
       }
 
       reader.readAsDataURL(file)
     })
-  }, [])
+  }, [props.entry.destination])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: 'image/jpeg, image/png, image/webp',
@@ -128,7 +131,7 @@ export function Entry(props: Props): JSX.Element {
   }
 
   useEffect(() => {
-    setTimeout(() => setStage('entered'), props.i * 50)
+    setTimeout(() => setStage('entered'), 200)
 
     const interval = setInterval(() => {
       setTimeFromNow(timeSince(new Date(props.entry.createdAt)))
@@ -155,7 +158,7 @@ export function Entry(props: Props): JSX.Element {
                   <div className="image-holder col-md-1 col-xs-12 text-center">
                     <img
                       src={`https://pics.avs.io/al_square/160/160/${props.entry.fullInfo.airline}@2x.png`}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', borderRadius: '8px' }}
                     />
                   </div>
                 </Tippy>

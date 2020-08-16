@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import React, { useEffect, Fragment, useState } from 'react'
+import React, { useEffect, Fragment, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHistory, faBell as fasBell } from '@fortawesome/free-solid-svg-icons'
@@ -35,18 +35,45 @@ export const Dashboard = (): JSX.Element => {
 
   const [code, setCode] = useState('')
 
+  const skips = useRef(1)
+
   useEffect(() => {
     document.body.classList.add('dashboard')
+
+    const onScrollCallback = () => {
+      const scrollFromBottom = document.body.scrollHeight - window.scrollY - document.body.clientHeight
+      
+      if (scrollFromBottom < 400 && !window.awaitingAdditionalLatests) {
+        window.awaitingAdditionalLatests = true
+        sendWebSocketData({
+          type: 'latest-entries',
+          data: {
+            count: LIST_SIZE,
+            skip: LIST_SIZE * skips.current
+          }
+        })
+
+        console.log(skips)
+
+        skips.current++
+      }
+    }
+
+    window.addEventListener('scroll', onScrollCallback)
 
     const data = {
       type: 'latest-entries',
       data: {
-        count: LIST_SIZE
+        count: LIST_SIZE,
+        skip: 0
       }
     }
     sendWebSocketData(data)
 
-    return () => document.body.classList.remove('dashboard')
+    return () => {
+      document.body.classList.remove('dashboard')
+      window.removeEventListener('scroll', onScrollCallback)
+    }
   }, [dispatch])
 
   const handleSignOut = () => {

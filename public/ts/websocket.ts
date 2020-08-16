@@ -14,7 +14,7 @@ import {
   setAuthenticationSucceeded
 } from './slices/auth'
 
-import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications } from './slices/dashboard'
+import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications, addSomeLatests } from './slices/dashboard'
 
 
 import store from './store'
@@ -67,7 +67,7 @@ const onMessage = (ev: MessageEvent): void => {
             showErrorToast(message.data.reason)
           } else {
             store.dispatch(addNewImage(message.data))
-            showSuccessToast(`Image '${message.data.image.name}' uploaded`)
+            showSuccessToast(`Image '${message.data.image.name}' uploaded`, 2000)
           }
 
           delete window.awaitingUploadNotification
@@ -78,13 +78,22 @@ const onMessage = (ev: MessageEvent): void => {
             showErrorToast(message.data.reason)
           } else {
             store.dispatch(removeImage(message.data))
-            showSuccessToast(`Image ${message.data.name} has been deleted`)
+            showSuccessToast(`Image ${message.data.name} has been deleted`, 2000)
           }
 
           delete window.awaitingDeletionNotification
         }
       } else if (message.type === 'latest-entries') {
-        store.dispatch(setLatest(message.data))
+        if (window.awaitingAdditionalLatests) {
+          if (message.data.length === 0) {
+            window.awaitingAdditionalLatests = true
+          } else {
+            store.dispatch(addSomeLatests(message.data))
+            window.awaitingAdditionalLatests = false
+          }
+        } else {
+          store.dispatch(setLatest(message.data))
+        }
       } else if (message.type === 'new-entry') {
         newEntrySound.play()
 
@@ -96,7 +105,7 @@ const onMessage = (ev: MessageEvent): void => {
           showErrorToast(message.data)
         }
         if (message.data === 'Facebook login successfull!') {
-          showSuccessToast(message.data)
+          showSuccessToast(message.data, 1000)
           store.dispatch(clearNotifications())
         }
         if (message.data === '2FA please') {

@@ -29,6 +29,9 @@ const dashboardSlice = createSlice({
 
       state.latest.unshift(payload)
     },
+    addSomeLatests: (state, { payload }: { payload: HistoryEntry[] }) => {
+      payload.forEach(entry => state.latest.push(entry))
+    },
     setEntryStatus: (state, { payload }): void => {
       for (const x of state.latest) {
         if (x._id === payload.id) {
@@ -76,6 +79,7 @@ export const stateSelector = (state: RootState): DashboardState => state.dashboa
 export const {
   setLatest,
   addLatest,
+  addSomeLatests,
   setEntryStatus,
   addNewImage,
   removeImage,

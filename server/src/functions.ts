@@ -165,11 +165,15 @@ export async function getAvaragePrice(o: string, d: string, period: number,): Pr
 }
 
 export async function checkVKApiAvailability(): Promise<void> {
-  got('https://api.vk.com/method/users.get?user_id=1').catch(e => {
-    if ((e.message as string).includes('connect ECONNREFUSED')) {
+  try {
+    await got('https://api.vk.com/method/users.get?user_id=1', { timeout: 1000 })
+  } catch (e) {
+    const message = e.message as string
+    if (/(connect\sECONNREFUSED)|Timeout/.test(message)) {
+      console.log('[app] \x1b[33m%s\x1b[0m', 'api.vk.com is unavailable, switching to proxy...')
       process.env.USE_PROXY = 'true'
     }
-  })
+  }
 }
 
 export async function checkImagesDatabaseIntegrity(): Promise<void> {
@@ -179,26 +183,28 @@ export async function checkImagesDatabaseIntegrity(): Promise<void> {
   let imagesAddedFromDisk = 0
   let imageRecordsRemovedFromDB = 0
   // check if images on disk exists in database
-  images.forEach(img => {
+  for (let i = 0; i < images.length; i++) {
+    const img = images[i]
     if (!dbEntries.includes(img)) {
-      saveImageInDB(img.split('-')[0], img.split('.')[1])
+      await saveImageInDB(img)
       imagesAddedFromDisk++
     }
-  })
+  }
   // check if images in database exists on disk
-  dbEntries.forEach(entry => {
+  for (let i = 0; i < dbEntries.length; i++) {
+    const entry = dbEntries[i]
     if (!images.includes(entry)) {
-      deleteImageRecord(entry)
+      await deleteImageRecord(entry)
       imageRecordsRemovedFromDB++
     }
-  })
+  }
 
   if (imagesAddedFromDisk > 0) {
-    console.log(`\x1b[31m%s\x1b[0m ${imagesAddedFromDisk} images were found on disk and restored in database`, 'Integrity damaged')
+    console.log(`[app] \x1b[31m%s\x1b[0m ${imagesAddedFromDisk} images were found on disk and restored in database`, 'Integrity damaged')
   }
 
   if (imageRecordsRemovedFromDB > 0) {
-    console.log(`\x1b[31m%s\x1b[0m ${imageRecordsRemovedFromDB} database records were not confirmed on disk`, 'Integrity damaged')
+    console.log(`[app] \x1b[31m%s\x1b[0m ${imageRecordsRemovedFromDB} database records were not confirmed on disk`, 'Integrity damaged')
   }
 }
 

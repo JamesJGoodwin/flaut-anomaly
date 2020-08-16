@@ -72,12 +72,11 @@ export const initFacebookListener = async (handler: NodeJS.EventEmitter): Promis
     sendWebsocketData(JSON.stringify({ type: 'notification', data: 'Facebook login successfull!' }))
 
     api.setOptions({
-      listenEvents: true
+      listenEvents: true,
+      logLevel: 'silent'
     })
 
     await redis.set(facebookAppstateCacheKey, JSON.stringify(api.getAppState()), 'EX', 86400 * 90)
-
-    console.log('Facebook listener is up and running...')
 
     api.listenMqtt(async (err: any, event: any) => {
       if (err) return console.error(err)
