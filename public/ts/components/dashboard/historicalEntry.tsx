@@ -158,7 +158,7 @@ export function Entry(props: Props): JSX.Element {
                   <div className="image-holder col-md-1 col-xs-12 text-center">
                     <img
                       src={`https://pics.avs.io/al_square/160/160/${props.entry.fullInfo.airline}@2x.png`}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', borderRadius: '8px' }}
                     />
                   </div>
                 </Tippy>
