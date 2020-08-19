@@ -155,7 +155,11 @@ export interface AnomalyPictureReturnType {
     anomalyData: TicketParser;
 }
 
-export interface GetWallUploadServerResponse {
+interface BaseVKResponse {
+    error: { [key: string]: string | number }
+}
+
+export interface GetWallUploadServerResponse extends BaseVKResponse {
     response: {
         upload_url: string;
         album_id: number;
@@ -165,11 +169,11 @@ export interface GetWallUploadServerResponse {
 
 export interface UploadPhotoResponse {
     server: number;
-    photo: Array<string>;
+    photo: Array<string> | `'[]'`;
     hash: string;
 }
 
-export interface SaveWallPhotoResponse {
+export interface SaveWallPhotoResponse extends BaseVKResponse {
     response: Array<{
         id: number;
         album_id: number;
@@ -241,7 +245,7 @@ declare global {
     interface Window {
         ws: WebSocket;
         startWebSocket(): void;
-        awaitingUploadNotification: boolean;
+        awaitingUploadNotification: Array<boolean>;
         awaitingDeletionNotification: boolean;
         awaitingAdditionalLatests: boolean;
     }

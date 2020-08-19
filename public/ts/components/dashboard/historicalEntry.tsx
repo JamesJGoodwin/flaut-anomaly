@@ -85,30 +85,26 @@ export function Entry(props: Props): JSX.Element {
   const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.createdAt)))
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach((file, i) => {
-      const reader = new FileReader()
+    acceptedFiles.forEach(async (file, i) => {
+      const form = new FormData()
 
-      reader.onloadend = async () => {
-        if (!window.awaitingUploadNotification) {
-          window.awaitingUploadNotification = true
-        }
+      form.append('code', props.entry.destination)
+      form.append('image', file)
 
-        const res = await fetch('/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            [`${props.entry.destination}`]: reader.result as string
-          })
-        })
-
-        if (!res.ok) {
-          showErrorToast(`${res.status} ${res.statusText}`)
-        }
+      if (!window.awaitingUploadNotification) {
+        window.awaitingUploadNotification = [true]
+      } else {
+        window.awaitingUploadNotification.push(true)
       }
 
-      reader.readAsDataURL(file)
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: form
+      })
+
+      if (!res.ok) {
+        showErrorToast(`${res.status} ${res.statusText}`)
+      }
     })
   }, [props.entry.destination])
 
@@ -197,7 +193,7 @@ export function Entry(props: Props): JSX.Element {
         </div>
       </div>
       {props.entry?.images?.length > 0 && (
-        <div className="card-body d-flex align-items-center images-holder border-top pl-0 pr-0 mr-4 ml-4">
+        <div className="card-body d-flex align-items-center images-holder pl-0 pr-0 mr-4 ml-4">
           {props.entry.images.map(img =>
             <div
               className="image col-md-2 col-xs-12 mr-4"

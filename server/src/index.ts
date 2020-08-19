@@ -5,14 +5,16 @@ import { PugTemplates } from '../../types'
 
 import fs from 'fs'
 import pug from 'pug'
+import md5 from 'md5'
 import path from 'path'
 import sharp from 'sharp'
+import multer from 'multer'
 import dotenv from 'dotenv'
-import shortid from 'shortid'
 import express from 'express'
 import proxy from 'express-http-proxy'
 
 dotenv.config()
+const upload = multer()
 
 /**
  * Engine Modules
@@ -52,8 +54,6 @@ app.use('/proxy', proxy('https://api.vk.com', {
 }))
 
 app.use('/images', express.static('images'))
-
-app.use(express.json({ limit: '15mb' }))
 app.use(express.static('public'))
 
 app.disable('x-powered-by')
@@ -68,21 +68,20 @@ app.get('/render', async (req, res) => {
   }
 })
 
-app.post('/upload', async (req, res) => {
+app.post('/upload', upload.single('image'), async (req, res) => {
   try {
-    const [name, base64] = Object.entries(req.body as { [key: string]: string })[0]
-
-    const imageName = `${name}_${shortid.generate()}.webp`
+    const contentHash = md5(req.file.buffer)
+    const name = `${req.body.code}_${contentHash}.webp`
     const imagePath = path.resolve(__dirname, '../../images')
     const thumbnailPath = path.resolve(__dirname, '../../images/thumbnails')
 
+    if (!fs.existsSync(imagePath)) fs.mkdirSync(imagePath)
     if (!fs.existsSync(thumbnailPath)) fs.mkdirSync(thumbnailPath)
 
-    const record = await saveImageInDB(imageName)
+    const record = await saveImageInDB(name)
 
-    const imageBuff = Buffer.from(base64.split(';base64,')[1], 'base64')
-    await sharp(imageBuff).toFile(path.resolve(imagePath, imageName))
-    await sharp(imageBuff).resize(300).toFile(path.resolve(thumbnailPath, imageName))
+    await sharp(req.file.buffer).toFile(path.resolve(imagePath, name))
+    await sharp(req.file.buffer).resize(300).toFile(path.resolve(thumbnailPath, name))
 
     notifyClientAboutImageUpload(record)
 

@@ -16,8 +16,8 @@ dotenv.config()
  * Engine Modules
  */
 
-import { genText, vk as createVkPost, declOfNum } from './vk'
-import { parseTicketLink, getAvaragePrice } from '../functions'
+import { createVkPost } from './vk'
+import { parseTicketLink, getAvaragePrice, declOfNum, genText } from '../functions'
 import { initFacebookListener } from './listener'
 import { createHistoricalEntry, setEntryStatus, getImages } from './db'
 import { getAnomalyPicture } from './screenshot'
@@ -119,7 +119,7 @@ export async function initProcessor(): Promise<void> {
         try {
             await createVkPost(text, parsed.data, anomalyBase64Screenshot, rawStr, id)
         } catch (e) {
-            await setEntryStatus(id, 'failed', `[${e.name}] ${e.message}`)
+            //await setEntryStatus(id, 'failed', `[${e.name}] ${e.message}`)
             return console.error(e)
         }
 
