@@ -94,11 +94,11 @@ export const initFacebookListener = async (handler: NodeJS.EventEmitter): Promis
             for (const [k, v] of new URLSearchParams(url.parse(callToAction.action_link).search)) {
               if (k === 'u') aviasalesTracker = v
             }
-
+            
             const { headers, ...res } = await got(aviasalesTracker, {
               followRedirect: false,
               headers: {
-                'user-agent': `Hello, Aviasales developers. I am friendly bot from Flaut.ru. Please don't block me, okay?`
+                'user-agent': `This text needs to be here since CloudFlare does not allow empty User-Agents`
               }
             })
 
