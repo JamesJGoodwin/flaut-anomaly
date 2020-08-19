@@ -34,7 +34,7 @@ body {
       border-radius: 14px;
 
       &.--active {
-        background: rgba(3, 99, 244, .09);
+        background: rgba(3, 99, 244, 0.09);
 
         .nav-link {
           color: #007bff;
@@ -129,11 +129,6 @@ body {
       opacity: 0;
     }
 
-    &.dragged {
-      border-style: dashed;
-      border-width: 2px;
-    }
-
     .card-header {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
@@ -165,7 +160,62 @@ body {
 
     .images-holder {
       border-top: 1px solid #eee;
-      
+
+      .image + .dropzone {
+        width: 175px;
+        height: 100px;
+        border: 2px dashed #eee;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: border-color .3s ease;
+        padding: 5px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+
+        &:hover {
+          border-color: #cfd8dc;
+        }
+
+        &.--dragged {
+          border-color: #03a9f4;
+        }
+
+        p {
+          margin: 10px 0;
+          font-size: 14px;
+          color: #90a4ae;
+        }
+      }
+
+      &.--no-images {
+        margin: 5px !important;
+        border: 2px dashed #eee;
+        padding: 0;
+        border-radius: inherit;
+        cursor: pointer;
+        transition: border-color .3s ease;
+
+        &.--dragged {
+          border-color: #03a9f4;
+        }
+
+        &:hover {
+          border-color: #cfd8dc;
+        }
+
+        .dropzone {
+          width: 100%;
+          text-align: center;
+
+          p {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #90a4ae;
+          }
+        }
+      }
+
       .image {
         background-repeat: no-repeat;
         background-size: cover;
@@ -187,7 +237,7 @@ body {
           cursor: pointer;
           padding: 3px;
           color: #607d8b;
-          transition: color .3s ease;
+          transition: color 0.3s ease;
 
           &:hover {
             color: #f44336;
