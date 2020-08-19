@@ -4,11 +4,11 @@ import { Autocomplete, TicketParser, TicketParserSegment, CityNames, Latest } fr
  * Core Modules
  */
 
+import fs from 'fs'
 import got from 'got'
 import path from 'path'
 import dotenv from 'dotenv'
 import moment from 'moment'
-import { promises as fs } from 'fs'
 
 dotenv.config()
 
@@ -21,6 +21,8 @@ import { getAllImages, saveImageInDB, deleteImageRecord } from './anomaly/db'
 /**
  * Logic
  */
+
+const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '../cases.json'), { encoding: 'utf-8' }))
 
 /**
  * Example rawLink string:
@@ -177,7 +179,7 @@ export async function checkVKApiAvailability(): Promise<void> {
 }
 
 export async function checkImagesDatabaseIntegrity(): Promise<void> {
-  const images = (await fs.readdir(path.resolve(__dirname, '../../images'))).filter(img => /.(jpe?g|png|webp)$/.test(img))
+  const images = (await fs.promises.readdir(path.resolve(__dirname, '../../images'))).filter(img => /.(jpe?g|png|webp)$/.test(img))
   const dbEntries = (await getAllImages()).map(entry => entry.name)
 
   let imagesAddedFromDisk = 0
@@ -208,3 +210,53 @@ export async function checkImagesDatabaseIntegrity(): Promise<void> {
   }
 }
 
+export const declOfNum = (number: number, titles: string[]): string => {
+  const cases = [2, 0, 1, 1, 1, 2]
+  return titles[(number % 100 > 4 && number % 100 < 20) ? 2 : cases[(number % 10 < 5) ? number % 10 : 5]]
+}
+
+export const currencyToCase = (number: number, txt: string[], cases = [2, 0, 1, 1, 1, 2]): string => {
+  return txt[number % 100 > 4 && number % 100 < 20 ? 2 : cases[number % 10 < 5 ? number % 10 : 5]]
+}
+
+export const currencyToText = (num: number, curr: string): string => {
+  if (curr === 'rub') return currencyToCase(num, ['рубля', 'рубля', 'рублей'])
+  if (curr === 'uah') return currencyToCase(num, ['гривны', 'гривны', 'гривен'])
+  if (curr === 'kzt') return currencyToCase(num, ['тенге', 'тенге', 'тенге'])
+  if (curr === 'usd') return currencyToCase(num, ['доллара', 'доллара', 'долларов'])
+}
+
+export const genText = (anomaly: TicketParser, t: string, p: number): { text: string; link: string } => {
+  for (let i = 0; i < anomaly.segments.length; i++) {
+    for (const j in cases) {
+      if (j === anomaly.segments[i].origin.cityCode) {
+        anomaly.segments[i].origin.case = 'из ' + cases[j].cases.ro
+      }
+
+      if (j === anomaly.segments[i].destination.cityCode) {
+        anomaly.segments[i].destination.case = cases[j].cases.vi
+      }
+    }
+  }
+
+  const tripLength = moment.unix(anomaly.segments[1].departure.timestamp).diff(moment.unix(anomaly.segments[0].departure.timestamp), 'days')
+
+  let finalText = '🔥 Специальное предложение! '
+  finalText += anomaly.segments[0].origin.case.replace('из', 'Из')
+  finalText += ` ${anomaly.segments[0].destination.case}`
+  finalText += ` на ${tripLength} ${declOfNum(tripLength, ['день', 'дня', 'дней'])}`
+  finalText += ` за ${anomaly.price} ${currencyToText(anomaly.price, anomaly.currency)}`
+
+  let finalLink = `https://${process.env.PRICESDATA_DOMAIN}/search/${anomaly.segments[0].origin.code}${moment.unix(anomaly.segments[0].departure.timestamp).format('DDMM')}${anomaly.segments[0].destination.code}`
+
+  if (anomaly.segments.length > 1) {
+    finalLink += moment.unix(anomaly.segments[1].departure.timestamp).format('DDMM')
+  }
+
+  finalLink += `1?t=${t}&t_currency=${anomaly.currency}&t_original_price=${p}`
+
+  return {
+    text: finalText,
+    link: finalLink
+  }
+}
