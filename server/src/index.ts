@@ -69,10 +69,6 @@ app.get('/render', async (req, res) => {
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {
-  /*console.log(req.files)
-  console.log(req.file)
-  console.log(req.body)
-  return res.send('OK')*/
   try {
     const contentHash = md5(req.file.buffer)
     const name = `${req.body.code}_${contentHash}.webp`

@@ -193,7 +193,7 @@ export function Entry(props: Props): JSX.Element {
         </div>
       </div>
       {props.entry?.images?.length > 0 && (
-        <div className="card-body d-flex align-items-center images-holder border-top pl-0 pr-0 mr-4 ml-4">
+        <div className="card-body d-flex align-items-center images-holder pl-0 pr-0 mr-4 ml-4">
           {props.entry.images.map(img =>
             <div
               className="image col-md-2 col-xs-12 mr-4"
