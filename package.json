@@ -28,7 +28,7 @@
     "@types/express": "^4.17.7",
     "@types/express-http-proxy": "^1.6.1",
     "@types/ioredis": "^4.17.3",
-    "@types/jest": "^26.0.9",
+    "@types/jest": "^26.0.10",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/md5": "^2.2.0",
     "@types/mini-css-extract-plugin": "^0.9.1",
