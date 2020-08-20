@@ -85,30 +85,26 @@ export function Entry(props: Props): JSX.Element {
   const [timeFromNow, setTimeFromNow] = useState(timeSince(new Date(props.entry.createdAt)))
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach((file, i) => {
-      const reader = new FileReader()
+    acceptedFiles.forEach(async file => {
+      const form = new FormData()
 
-      reader.onloadend = async () => {
-        if (!window.awaitingUploadNotification) {
-          window.awaitingUploadNotification = true
-        }
+      form.append('code', props.entry.destination)
+      form.append('image', file)
 
-        const res = await fetch('/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            [`${props.entry.destination}`]: reader.result as string
-          })
-        })
-
-        if (!res.ok) {
-          showErrorToast(`${res.status} ${res.statusText}`)
-        }
+      if (!window.awaitingUploadNotification) {
+        window.awaitingUploadNotification = [true]
+      } else {
+        window.awaitingUploadNotification.push(true)
       }
 
-      reader.readAsDataURL(file)
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: form
+      })
+
+      if (!res.ok) {
+        showErrorToast(`${res.status} ${res.statusText}`)
+      }
     })
   }, [props.entry.destination])
 
@@ -138,77 +134,81 @@ export function Entry(props: Props): JSX.Element {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [props.entry.createdAt])
 
   return (
-    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength, dragged: isDragActive })}>
+    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength })}>
       <div className="card-header text-muted bg-white">
         {timeFromNow + ' назад'}
       </div>
-      <div {...getRootProps({ className: 'dropzone' })}>
-        <input {...getInputProps()} />
-        <div className="card-body d-flex align-items-center" style={{ cursor: 'default' }}>
-          {isDragActive
-            ? (<div className="d-flex align-items-center justify-content-center drag-n-drop col-12">
-              <p className="h5 text-muted">Drop your files here...</p>
-            </div>)
-            : (
-              <Fragment>
-                <Tippy content={props.entry.fullInfo.airline} {...TippyOptions}>
-                  <div className="image-holder col-md-1 col-xs-12 text-center">
-                    <img
-                      src={`https://pics.avs.io/al_square/160/160/${props.entry.fullInfo.airline}@2x.png`}
-                      style={{ width: '100%', borderRadius: '8px' }}
-                    />
-                  </div>
-                </Tippy>
-                <div className="route d-flex col-md-5 col-xs-12">
-                  <Tippy content={props.entry.fullInfo.segments[0].origin.name} {...TippyOptions}>
-                    <div className="origin d-block text-truncate col-md-6 col-xs-12 text-center">
-                      {props.entry.fullInfo.segments[0].origin.name}
-                      <small className="text-muted d-block">Город отправки</small>
-                    </div>
-                  </Tippy>
-                  <Tippy content={props.entry.fullInfo.segments[0].destination.name} {...TippyOptions}>
-                    <div className="destination d-block text-truncate col-md-6 col-xs-12 text-center">
-                      {props.entry.fullInfo.segments[0].destination.name}
-                      <small className="text-muted d-block">Город прибытия</small>
-                    </div>
-                  </Tippy>
-                </div>
-                <div className="dates col-md-2 col-xs-12 text-center">
-                  <div className="there">
-                    <small className="text-muted">Туда: </small>
-                    <small>{parseDate(props.entry.departureDate)}</small>
-                  </div>
-                  {props.entry.backDate && (
-                    <div className="thence">
-                      <small className="text-muted">Назад: </small>
-                      <small>{parseDate(props.entry.backDate)}</small>
-                    </div>
-                  )}
-                </div>
-                <div className="status col-md-4 col-xs-12">
-                  <Status statusText={props.entry.status} descr={props.entry.statusDescription} />
-                </div>
-              </Fragment>
-            )
-          }
-        </div>
-      </div>
-      {props.entry?.images?.length > 0 && (
-        <div className="card-body d-flex align-items-center images-holder border-top pl-0 pr-0 mr-4 ml-4">
-          {props.entry.images.map(img =>
-            <div
-              className="image col-md-2 col-xs-12 mr-4"
-              style={{ backgroundImage: `url(/images/thumbnails/${img.name})` }}
-              key={img._id}
-            >
-              <FontAwesomeIcon onClick={() => deleteImage(img.name)} icon={faTimes} />
+      <div className="card-body d-flex align-items-center" style={{ cursor: 'default' }}>
+        <Fragment>
+          <Tippy content={props.entry.fullInfo.airline} {...TippyOptions}>
+            <div className="image-holder col-md-1 col-xs-12 text-center">
+              <img
+                src={`https://pics.avs.io/al_square/160/160/${props.entry.fullInfo.airline}@2x.png`}
+                style={{ width: '100%', borderRadius: '8px' }}
+              />
             </div>
-          )}
-        </div>
-      )}
+          </Tippy>
+          <div className="route d-flex col-md-5 col-xs-12">
+            <Tippy content={props.entry.fullInfo.segments[0].origin.name} {...TippyOptions}>
+              <div className="origin d-block text-truncate col-md-6 col-xs-12 text-center">
+                {props.entry.fullInfo.segments[0].origin.name}
+                <small className="text-muted d-block">Город отправки</small>
+              </div>
+            </Tippy>
+            <Tippy content={props.entry.fullInfo.segments[0].destination.name} {...TippyOptions}>
+              <div className="destination d-block text-truncate col-md-6 col-xs-12 text-center">
+                {props.entry.fullInfo.segments[0].destination.name}
+                <small className="text-muted d-block">Город прибытия</small>
+              </div>
+            </Tippy>
+          </div>
+          <div className="dates col-md-2 col-xs-12 text-center">
+            <div className="there">
+              <small className="text-muted">Туда: </small>
+              <small>{parseDate(props.entry.departureDate)}</small>
+            </div>
+            {props.entry.backDate && (
+              <div className="thence">
+                <small className="text-muted">Назад: </small>
+                <small>{parseDate(props.entry.backDate)}</small>
+              </div>
+            )}
+          </div>
+          <div className="status col-md-4 col-xs-12">
+            <Status statusText={props.entry.status} descr={props.entry.statusDescription} />
+          </div>
+        </Fragment>
+      </div>
+      <div className={cx('card-body d-flex align-items-center images-holder pl-0 pr-0 mr-4 ml-4', { '--no-images': props.entry?.images?.length === 0, '--dragged': isDragActive } )}>
+        {props.entry?.images?.length > 0
+          ?
+          <Fragment>
+            {props.entry.images.map(img =>
+              <div
+                className="image col-md-2 col-xs-12 mr-4"
+                style={{ backgroundImage: `url(/images/thumbnails/${img.name})` }}
+                key={img._id}
+              >
+                <FontAwesomeIcon onClick={() => deleteImage(img.name)} icon={faTimes} />
+              </div>
+            )}
+            {props.entry.images.length < 5 &&
+              <div {...getRootProps({ className: cx('dropzone', { '--dragged': isDragActive }) })}>
+                <input {...getInputProps()} />
+                <p>Drag &apos;n&apos; drop or click to upload more images</p>
+              </div>
+            }
+          </Fragment>
+          :
+          <div {...getRootProps({ className: 'dropzone' })}>
+            <input {...getInputProps()} />
+            <p>Drag &apos;n&apos; drop some files here, or click to select files</p>
+          </div>
+        }
+      </div>
     </div>
   )
 }

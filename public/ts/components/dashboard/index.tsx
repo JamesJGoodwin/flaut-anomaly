@@ -53,8 +53,6 @@ export const Dashboard = (): JSX.Element => {
           }
         })
 
-        console.log(skips)
-
         skips.current++
       }
     }
@@ -135,7 +133,7 @@ export const Dashboard = (): JSX.Element => {
               </span>
             </Tippy>
           </li>
-          <li className="nav-item text-nowrap">
+          <li className="nav-item text-nowrap sign-out">
             <a className="nav-link" href="#" onClick={() => handleSignOut()}>Sign out</a>
           </li>
         </ul>
@@ -145,7 +143,7 @@ export const Dashboard = (): JSX.Element => {
           <nav className="col-md-2 d-none d-md-block sidebar">
             <div className="sidebar-sticky">
               <ul className="nav flex-column">
-                <li className="nav-item">
+                <li className="nav-item --active">
                   <FontAwesomeIcon icon={faHistory} />
                   <a className="nav-link active" href="#">History</a>
                 </li>
@@ -154,7 +152,6 @@ export const Dashboard = (): JSX.Element => {
           </nav>
           <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light">
             <div className="pt-3 pb-2 mb-3">
-              <h1 className="h2">History</h1>
               <div className="container-fluid history-holder pt-4">
                 {latest.map((val, i) =>
                   <HistoricalEntry

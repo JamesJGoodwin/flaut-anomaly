@@ -62,7 +62,7 @@ const onMessage = (ev: MessageEvent): void => {
 
     if (state.auth.isAuthenticated && state.auth.isAuthorized) {
       if (message.type === 'upload-image') {
-        if (window.awaitingUploadNotification) {
+        if (window.awaitingUploadNotification.length > 0) {
           if (message.data.result === 'error') {
             showErrorToast(message.data.reason)
           } else {
@@ -70,7 +70,7 @@ const onMessage = (ev: MessageEvent): void => {
             showSuccessToast(`Image '${message.data.image.name}' uploaded`, 2000)
           }
 
-          delete window.awaitingUploadNotification
+          window.awaitingUploadNotification.pop()
         }
       } else if (message.type === 'delete-image') {
         if (window.awaitingDeletionNotification) {

@@ -112,3 +112,6 @@ public/bundle/
 
 # Webpack compiled configs
 webpack/*.js
+
+# Images dynamic folder
+images/

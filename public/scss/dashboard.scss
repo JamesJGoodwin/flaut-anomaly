@@ -1,11 +1,18 @@
+body {
+  background: #f8f9fa !important;
+}
+
 .sidebar {
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 100; /* Behind the navbar */
-  padding: 48px 0 0; /* Height of navbar */
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  margin: 87px 0 20px 20px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 20px;
+  border: 1px solid #eee;
 
   .sidebar-sticky {
     position: relative;
@@ -24,14 +31,20 @@
       display: flex;
       align-items: center;
       padding: 0 0 0 10px;
+      border-radius: 14px;
+
+      &.--active {
+        background: rgba(3, 99, 244, 0.09);
+
+        .nav-link {
+          color: #007bff;
+        }
+      }
 
       .nav-link {
         font-weight: 500;
         color: #333;
-
-        &.active {
-          color: #007bff;
-        }
+        width: 100%;
       }
     }
   }
@@ -109,15 +122,11 @@
     transition: transform 0.3s ease, opacity 0.3s ease;
     min-height: 90px;
     border-radius: 8px;
+    border: 1px solid #eee;
 
     &.entering {
       transform: translateY(-15px) scale(0.9);
       opacity: 0;
-    }
-
-    &.dragged {
-      border-style: dashed;
-      border-width: 2px;
     }
 
     .card-header {
@@ -150,6 +159,63 @@
     }
 
     .images-holder {
+      border-top: 1px solid #eee;
+
+      .image + .dropzone {
+        width: 175px;
+        height: 100px;
+        border: 2px dashed #eee;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: border-color .3s ease;
+        padding: 5px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+
+        &:hover {
+          border-color: #cfd8dc;
+        }
+
+        &.--dragged {
+          border-color: #03a9f4;
+        }
+
+        p {
+          margin: 10px 0;
+          font-size: 14px;
+          color: #90a4ae;
+        }
+      }
+
+      &.--no-images {
+        margin: 5px !important;
+        border: 2px dashed #eee;
+        padding: 0;
+        border-radius: inherit;
+        cursor: pointer;
+        transition: border-color .3s ease;
+
+        &.--dragged {
+          border-color: #03a9f4;
+        }
+
+        &:hover {
+          border-color: #cfd8dc;
+        }
+
+        .dropzone {
+          width: 100%;
+          text-align: center;
+
+          p {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #90a4ae;
+          }
+        }
+      }
+
       .image {
         background-repeat: no-repeat;
         background-size: cover;
@@ -157,7 +223,6 @@
         height: 100px;
         width: 100%;
         border-radius: 10px;
-        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
         position: relative;
 
         > svg {
@@ -170,6 +235,13 @@
           width: 18px;
           height: 18px;
           cursor: pointer;
+          padding: 3px;
+          color: #607d8b;
+          transition: color 0.3s ease;
+
+          &:hover {
+            color: #f44336;
+          }
         }
       }
     }
