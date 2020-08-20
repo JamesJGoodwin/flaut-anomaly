@@ -70,24 +70,19 @@ app.get('/render', async (req, res) => {
 
 app.post('/upload', upload.single('image'), async (req, res) => {
   try {
-    console.time('md5')
     const contentHash = md5(req.file.buffer)
-    console.timeEnd('md5')
     const name = `${req.body.code}_${contentHash}.webp`
     const imagePath = path.resolve(__dirname, '../../images')
     const thumbnailPath = path.resolve(__dirname, '../../images/thumbnails')
 
     if (!fs.existsSync(imagePath)) fs.mkdirSync(imagePath)
     if (!fs.existsSync(thumbnailPath)) fs.mkdirSync(thumbnailPath)
-    console.time('saveImageInDB')
+
     const record = await saveImageInDB(name)
-    console.timeEnd('saveImageInDB')
-    console.time('sharp fullsize')
+
     await sharp(req.file.buffer).toFile(path.resolve(imagePath, name))
-    console.timeEnd('sharp fullsize')
-    console.time('sharp resize')
     await sharp(req.file.buffer).resize(300).toFile(path.resolve(thumbnailPath, name))
-    console.timeEnd('sharp resize')
+    
     notifyClientAboutImageUpload(record)
 
     res.send('OK')
