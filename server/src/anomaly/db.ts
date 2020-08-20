@@ -126,12 +126,9 @@ export async function getRecentEntries(n: number, skip?: number): Promise<Histor
   return latest
 }
 
-export async function getUserPassAndUuid(username: string): Promise<null | { password: string; uuid: string }> {
-  const res = await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
-
-  if (typeof res.password === 'string' && typeof res.uuid === 'string') {
-    return { password: String(res.password), uuid: String(res.password) }
-  }
+type gUPAU = { password: string; uuid: string }
+export async function getUserPassAndUuid(username: string): Promise<null | gUPAU> {
+  return await db.collection('users').findOne<gUPAU>({ username }, { projection: { password: 1, uuid: 1 } })
 }
 
 export async function checkForStuckHistoricalEntries(): Promise<void> {

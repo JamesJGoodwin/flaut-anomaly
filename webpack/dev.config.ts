@@ -1,6 +1,7 @@
-import webpack, { Configuration } from 'webpack'
+import webpack from 'webpack'
 import merge from 'webpack-merge'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 
 import baseWebpackConfig from './base.config.js'
 
@@ -26,8 +27,13 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new webpack.SourceMapDevToolPlugin({
       filename: '[file].map',
       exclude: /vendors.*.*/
+    }),
+    new BundleAnalyzerPlugin({
+      openAnalyzer: false,
+      defaultSizes: 'stat',
+      analyzerPort: 8889
     })
   ]
-} as Configuration)
+})
 
 export default new Promise(resolve => resolve(devWebpackConfig))
