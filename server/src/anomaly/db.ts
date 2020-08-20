@@ -127,7 +127,11 @@ export async function getRecentEntries(n: number, skip?: number): Promise<Histor
 }
 
 export async function getUserPassAndUuid(username: string): Promise<null | { password: string; uuid: string }> {
-  return await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
+  const res = await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
+
+  if (typeof res.password === 'string' && typeof res.uuid === 'string') {
+    return { password: String(res.password), uuid: String(res.password) }
+  }
 }
 
 export async function checkForStuckHistoricalEntries(): Promise<void> {
