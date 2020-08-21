@@ -6,7 +6,7 @@ import React, { useEffect, Fragment, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHistory, faBell as fasBell } from '@fortawesome/free-solid-svg-icons'
-import { faBell } from '@fortawesome/free-regular-svg-icons'
+import { faBell, faUser } from '@fortawesome/free-regular-svg-icons'
 import { roundArrow } from 'tippy.js'
 import Tippy from '@tippyjs/react'
 import cx from 'classnames'
@@ -134,7 +134,7 @@ export const Dashboard = (): JSX.Element => {
             </Tippy>
           </li>
           <li className="nav-item text-nowrap sign-out">
-            <a className="nav-link" href="#" onClick={() => handleSignOut()}>Sign out</a>
+            <a className="nav-link" href="#" onClick={() => handleSignOut()}>Выйти</a>
           </li>
         </ul>
       </nav>
@@ -145,7 +145,11 @@ export const Dashboard = (): JSX.Element => {
               <ul className="nav flex-column">
                 <li className="nav-item --active">
                   <FontAwesomeIcon icon={faHistory} />
-                  <a className="nav-link active" href="#">History</a>
+                  <a className="nav-link" href="#">История</a>
+                </li>
+                <li className="nav-item">
+                  <FontAwesomeIcon icon={faUser} />
+                  <a className="nav-link" href="#">Пользователи</a>
                 </li>
               </ul>
             </div>

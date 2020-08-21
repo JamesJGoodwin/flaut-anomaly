@@ -34,11 +34,13 @@ body {
       border-radius: 14px;
 
       &.--active {
-        background: rgba(3, 99, 244, 0.09);
-
         .nav-link {
           color: #007bff;
         }
+      }
+
+      svg {
+        min-width: 20px;
       }
 
       .nav-link {
@@ -134,6 +136,10 @@ body {
       border-bottom-right-radius: 0;
       border-top-left-radius: inherit;
       border-top-right-radius: inherit;
+      font-size: 14px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      border-color: #eee;
     }
 
     .card-body {
