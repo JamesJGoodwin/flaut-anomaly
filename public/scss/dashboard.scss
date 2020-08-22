@@ -22,6 +22,10 @@ body {
     overflow-x: hidden;
     overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
     max-height: 100%;
+    
+    &::-webkit-scrollbar {
+      width: 0px;
+    }  
 
     @supports ((position: -webkit-sticky) or (position: sticky)) {
       position: -webkit-sticky;
