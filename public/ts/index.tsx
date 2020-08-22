@@ -6,6 +6,9 @@ import React from 'react'
 import { render } from 'react-dom'
 import { Provider } from 'react-redux'
 
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
+
 
 import 'normalize.css'
 import 'bootstrap/dist/css/bootstrap.css'

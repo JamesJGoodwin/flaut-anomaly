@@ -14,7 +14,17 @@ import {
   setAuthenticationSucceeded
 } from './slices/auth'
 
-import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications, addSomeLatests } from './slices/dashboard'
+import {
+  setLatest,
+  addLatest,
+  setEntryStatus,
+  addNewImage,
+  removeImage,
+  addNotification,
+  clearNotifications,
+  addSomeLatests,
+  updateLatestStats
+} from './slices/dashboard'
 
 
 import store from './store'
@@ -98,8 +108,22 @@ const onMessage = (ev: MessageEvent): void => {
         newEntrySound.play()
 
         store.dispatch(addLatest(message.data.entry))
+
+        sendWebSocketData({
+          type: 'dashboard-statistics',
+          data: {
+            period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
+          }
+        })
       } else if (message.type === 'entry-status-update') {
         store.dispatch(setEntryStatus(message.data))
+
+        sendWebSocketData({
+          type: 'dashboard-statistics',
+          data: {
+            period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
+          }
+        })
       } else if (message.type === 'notification') {
         if (message.data === 'Facebook login failed') {
           showErrorToast(message.data)
@@ -111,6 +135,8 @@ const onMessage = (ev: MessageEvent): void => {
         if (message.data === '2FA please') {
           store.dispatch(addNotification('2FA'))
         }
+      } else if (message.type === 'dashboard-statistics') {
+        store.dispatch(updateLatestStats(message.data))
       }
     }
   } else {

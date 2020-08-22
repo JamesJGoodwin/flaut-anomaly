@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import { TicketParser, AllowedStatuses, HistoryEntry, ImageRecord } from '../../../types'
+import { TicketParser, AllowedStatuses, HistoryEntry, ImageRecord, LatestStatsReturnType, gUPAU } from '../../../types'
 
 import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
@@ -126,12 +126,20 @@ export async function getRecentEntries(n: number, skip?: number): Promise<Histor
   return latest
 }
 
-export async function getUserPassAndUuid(username: string): Promise<null | { password: string; uuid: string }> {
-  const res = await db.collection('users').findOne({ username }, { projection: { password: 1, uuid: 1 } })
 
-  if (typeof res.password === 'string' && typeof res.uuid === 'string') {
-    return { password: String(res.password), uuid: String(res.password) }
+
+export async function getLatestStatistics(date: Date): Promise<LatestStatsReturnType> {
+  const latests: HistoryEntry[] = await db.collection('history').find({ createdAt: { $gte: date } }).toArray()
+
+  return {
+    succeeded: latests.filter(l => l.status === 'succeeded').length,
+    failed: latests.filter(l => l.status === 'failed').length,
+    declined: latests.filter(l => l.status === 'declined').length
   }
+}
+
+export async function getUserPassAndUuid(username: string): Promise<null | gUPAU> {
+  return await db.collection('users').findOne<gUPAU>({ username }, { projection: { password: 1, uuid: 1 } })
 }
 
 export async function checkForStuckHistoricalEntries(): Promise<void> {

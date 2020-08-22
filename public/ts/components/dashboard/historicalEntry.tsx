@@ -12,9 +12,9 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { useDropzone } from 'react-dropzone'
 import cx from 'classnames'
 
-import 'tippy.js/dist/tippy.css';
-import 'tippy.js/dist/backdrop.css';
-import 'tippy.js/animations/shift-away.css';
+import 'tippy.js/dist/tippy.css'
+import 'tippy.js/dist/backdrop.css'
+import 'tippy.js/animations/shift-away.css'
 
 /**
  * Engine Modules

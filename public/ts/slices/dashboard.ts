@@ -1,16 +1,22 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { HistoryEntry } from '../../../types'
+import { HistoryEntry, LatestStatsReturnType } from '../../../types'
 
 import { RootState } from './index'
 
 interface DashboardState {
   latest: HistoryEntry[]
   notifications: Array<string>
+  statistics: LatestStatsReturnType
 }
 
 const initialState: DashboardState = {
   latest: [],
-  notifications: []
+  notifications: [],
+  statistics: {
+    succeeded: 0,
+    failed: 0,
+    declined: 0
+  }
 }
 
 const LIST_SIZE = 20
@@ -70,6 +76,9 @@ const dashboardSlice = createSlice({
     },
     clearNotifications: state => {
       state.notifications = []
+    },
+    updateLatestStats: (state, { payload }: { payload: LatestStatsReturnType }) => {
+      state.statistics = payload
     }
   }
 })
@@ -84,7 +93,8 @@ export const {
   addNewImage,
   removeImage,
   addNotification,
-  clearNotifications
+  clearNotifications,
+  updateLatestStats
 } = dashboardSlice.actions
 
 export default dashboardSlice.reducer
