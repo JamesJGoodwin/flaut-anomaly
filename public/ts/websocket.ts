@@ -14,7 +14,17 @@ import {
   setAuthenticationSucceeded
 } from './slices/auth'
 
-import { setLatest, addLatest, setEntryStatus, addNewImage, removeImage, addNotification, clearNotifications, addSomeLatests } from './slices/dashboard'
+import {
+  setLatest,
+  addLatest,
+  setEntryStatus,
+  addNewImage,
+  removeImage,
+  addNotification,
+  clearNotifications,
+  addSomeLatests,
+  updateLatestStats
+} from './slices/dashboard'
 
 
 import store from './store'
@@ -90,6 +100,13 @@ const onMessage = (ev: MessageEvent): void => {
           } else {
             store.dispatch(addSomeLatests(message.data))
             window.awaitingAdditionalLatests = false
+
+            sendWebSocketData({
+              type: 'dashboard-statistics',
+              data: {
+                period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
+              }
+            })
           }
         } else {
           store.dispatch(setLatest(message.data))
@@ -111,6 +128,8 @@ const onMessage = (ev: MessageEvent): void => {
         if (message.data === '2FA please') {
           store.dispatch(addNotification('2FA'))
         }
+      } else if (message.type === 'dashboard-statistics') {
+        store.dispatch(updateLatestStats(message.data))
       }
     }
   } else {

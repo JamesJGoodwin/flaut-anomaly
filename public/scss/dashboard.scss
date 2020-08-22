@@ -21,10 +21,141 @@ body {
     padding-top: 0.5rem;
     overflow-x: hidden;
     overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    max-height: 100%;
 
     @supports ((position: -webkit-sticky) or (position: sticky)) {
       position: -webkit-sticky;
       position: sticky;
+    }
+
+    .statistics-period-selector {
+      display: flex;
+      justify-content: center;
+
+      .dropdown-toggle {
+        border: 0;
+        outline: none;
+        background: #607d8b;
+        color: #fff;
+        font-size: 14px;
+        margin-top: 10px;
+        padding: 5px 15px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #546e7a;
+        }
+
+        &:active {
+          box-shadow: 0 0 0 0.2em #b0bec5;
+        }
+      }
+
+      .dropdown-content {
+        display: flex;
+        flex-direction: column;
+
+        .item {
+          outline: none;
+          border: 0;
+          background: #fff;
+          padding: 5px 15px;
+          min-width: 100px;
+          transition: all 0.1s ease;
+          border-radius: 4px;
+
+          &:hover {
+            background: #eceff1;
+          }
+
+          &:not(:last-child) {
+            margin-bottom: 5px;
+          }
+        }
+      }
+    }
+
+    .statistics-holder {
+      margin-top: 20px;
+
+      .stats-card {
+        position: relative;
+        overflow: hidden;
+        background: #eceff1;
+        padding: 10px 20px;
+        border-radius: 8px;
+        min-height: 125px;
+
+        .content {
+          p {
+            font-size: 14px;
+            font-weight: 500;
+          }
+
+          span.number {
+            font-size: 45px;
+            font-weight: bold;
+          }
+        }
+
+        svg {
+          position: absolute;
+          right: -6%;
+          bottom: -13%;
+          font-size: 80px;
+          opacity: 0.5;
+          transform: rotate(7deg);
+          width: 100px;
+          height: 100px;
+        }
+
+        &.succeeded {
+          background: #dcedc8;
+
+          .content {
+            span.number {
+              color: #8bc34a;
+            }
+          }
+
+          svg {
+            color: #8bc34a;
+          }
+        }
+
+        &.failed {
+          background: #ffe0b2;
+
+          .content {
+            span.number {
+              color: #fb8c00;
+            }
+          }
+
+          svg {
+            color: #fb8c00;
+          }
+        }
+
+        &.declined {
+          background: #ffcdd2;
+
+          .content {
+            span.number {
+              color: #f44336;
+            }
+          }
+
+          svg {
+            color: #f44336;
+          }
+        }
+
+        &:not(:last-child) {
+          margin-bottom: 10px;
+        }
+      }
     }
 
     li.nav-item {
@@ -173,7 +304,7 @@ body {
         border: 2px dashed #eee;
         border-radius: 10px;
         cursor: pointer;
-        transition: border-color .3s ease;
+        transition: border-color 0.3s ease;
         padding: 5px;
         text-align: center;
         display: flex;
@@ -200,7 +331,7 @@ body {
         padding: 0;
         border-radius: inherit;
         cursor: pointer;
-        transition: border-color .3s ease;
+        transition: border-color 0.3s ease;
 
         &.--dragged {
           border-color: #03a9f4;

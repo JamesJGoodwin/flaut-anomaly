@@ -5,7 +5,13 @@
 import React, { useEffect, Fragment, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHistory, faBell as fasBell } from '@fortawesome/free-solid-svg-icons'
+import {
+  faHistory,
+  faBell as fasBell,
+  faCheck as fasCheck,
+  faTimes as fasTimes,
+  faExclamationTriangle as fasExclamationTriangle
+} from '@fortawesome/free-solid-svg-icons'
 import { faBell, faUser } from '@fortawesome/free-regular-svg-icons'
 import { roundArrow } from 'tippy.js'
 import Tippy from '@tippyjs/react'
@@ -27,22 +33,27 @@ import { stateSelector, clearNotifications } from '../../slices/dashboard'
  * Logic
  */
 
+type PossiblePeriods = 'day' | 'week' | 'month'
+
 const LIST_SIZE = 20
 
 export const Dashboard = (): JSX.Element => {
   const dispatch = useDispatch()
-  const { latest, notifications } = useSelector(stateSelector)
+  const { latest, notifications, statistics } = useSelector(stateSelector)
 
   const [code, setCode] = useState('')
+  const [statsPeriod, setStatsPeriod] = useState<PossiblePeriods>(localStorage.getItem('dashboardStatisticsPeriod') as PossiblePeriods || 'week')
+  const [periodSelectorVisible, setPeriodSelectorVisible] = useState(false)
 
   const skips = useRef(1)
+  const isInitialMount = useRef(true)
 
   useEffect(() => {
     document.body.classList.add('dashboard')
 
     const onScrollCallback = () => {
       const scrollFromBottom = document.body.scrollHeight - window.scrollY - document.body.clientHeight
-      
+
       if (scrollFromBottom < 400 && !window.awaitingAdditionalLatests) {
         window.awaitingAdditionalLatests = true
         sendWebSocketData({
@@ -59,14 +70,20 @@ export const Dashboard = (): JSX.Element => {
 
     window.addEventListener('scroll', onScrollCallback)
 
-    const data = {
+    sendWebSocketData({
       type: 'latest-entries',
       data: {
         count: LIST_SIZE,
         skip: 0
       }
-    }
-    sendWebSocketData(data)
+    })
+
+    sendWebSocketData({
+      type: 'dashboard-statistics',
+      data: {
+        period: statsPeriod
+      }
+    })
 
     return () => {
       document.body.classList.remove('dashboard')
@@ -74,12 +91,42 @@ export const Dashboard = (): JSX.Element => {
     }
   }, [dispatch])
 
+  useEffect(() => {
+    if (isInitialMount.current === true) {
+      isInitialMount.current = false
+    } else {
+      sendWebSocketData({
+        type: 'dashboard-statistics',
+        data: {
+          period: statsPeriod
+        }
+      })
+    }
+  }, [statsPeriod])
+
   const handleSignOut = () => {
     localStorage.removeItem('jwt')
     localStorage.removeItem('uuid')
 
     dispatch(signOut())
   }
+
+  const getStatsLabel = (type: PossiblePeriods) => {
+    if (type === 'day') return 'день'
+    if (type === 'week') return 'неделю'
+    if (type === 'month') return 'месяц'
+  }
+
+  const hidePeriodSelector = () => setPeriodSelectorVisible(false)
+  const showPeriodSelector = () => setPeriodSelectorVisible(true)
+
+  const setPeriod = (type: PossiblePeriods) => {
+    setStatsPeriod(type)
+    hidePeriodSelector()
+    localStorage.setItem('dashboardStatisticsPeriod', type)
+  }
+
+  const typedObjectEntries = Object.entries as <T>(o: T) => [Extract<keyof T, string>, T[keyof T]][]
 
   return (
     <Fragment>
@@ -152,6 +199,37 @@ export const Dashboard = (): JSX.Element => {
                   <a className="nav-link" href="#">Пользователи</a>
                 </li>
               </ul>
+              <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                Статистика
+              </h6>
+              <div className="statistics-period-selector">
+                <Tippy
+                  visible={periodSelectorVisible}
+                  onClickOutside={hidePeriodSelector}
+                  interactive={true}
+                  arrow={roundArrow}
+                  theme="light"
+                  offset={[0, 20]}
+                  duration={300}
+                  placement="bottom"
+                  content={
+                    <div className="dropdown-content">
+                      <button className="item" type="button" onClick={() => setPeriod('day')}>День</button>
+                      <button className="item" type="button" onClick={() => setPeriod('week')}>Неделя</button>
+                      <button className="item" type="button" onClick={() => setPeriod('month')}>Месяц</button>
+                    </div>
+                  }
+                >
+                  <button className="dropdown-toggle" onClick={periodSelectorVisible ? hidePeriodSelector : showPeriodSelector}>
+                    Статистика за:&nbsp;{getStatsLabel(statsPeriod)}
+                  </button>
+                </Tippy>
+              </div>
+              <div className="statistics-holder">
+                {typedObjectEntries(statistics).map(([key, value]) =>
+                  <StatsCard key={key} _key={key} value={value} />
+                )}
+              </div>
             </div>
           </nav>
           <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light">
@@ -171,5 +249,29 @@ export const Dashboard = (): JSX.Element => {
         </div>
       </div>
     </Fragment>
+  )
+}
+
+const StatsCard = ({ _key, value }: { _key: 'succeeded' | 'failed' | 'declined', value: number }) => {
+  const keyToLabel = (x: typeof _key) => {
+    if (x === 'succeeded') return 'Отправлено в группу'
+    if (x === 'declined') return 'Не соответствует параметрам'
+    if (x === 'failed') return 'Завершилось с ошибкой'
+  }
+
+  const keyToIcon = (x: typeof _key) => {
+    if (x === 'succeeded') return fasCheck
+    if (x === 'declined') return fasTimes
+    if (x === 'failed') return fasExclamationTriangle
+  }
+
+  return (
+    <div className={cx('stats-card', _key)}>
+      <div className="content">
+        <p>{keyToLabel(_key)}</p>
+        <span className="number">{value}</span>
+      </div>
+      <FontAwesomeIcon icon={keyToIcon(_key)} />
+    </div>
   )
 }

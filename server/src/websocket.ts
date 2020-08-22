@@ -16,7 +16,7 @@ sharp.cache(false)
  * Engine Modules
  */
 
-import { getUserPassAndUuid, getRecentEntries, deleteImageRecord } from './anomaly/db'
+import { getUserPassAndUuid, getRecentEntries, deleteImageRecord, getLatestStatistics } from './anomaly/db'
 import { signJwt, verifyJwt } from './jwt'
 import { triggerCodeInput } from './anomaly/listener'
 
@@ -199,6 +199,13 @@ export function init(): void {
           }
         } else if (parsed.type === 'server-2fa') {
           triggerCodeInput(parsed.data.code)
+        } else if (parsed.type === 'dashboard-statistics') {
+          const periods = { day: 86400, week: 86400 * 7, month: 86400 * 30 }
+          const data = await getLatestStatistics(new Date(Date.now() - periods[parsed.data.period] * 1000))
+
+          return ws.send(
+            JSON.stringify({ type: 'dashboard-statistics', data })
+          )
         } else {
           console.log('Received unknown websocket message: ', parsed)
         }
