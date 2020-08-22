@@ -13,6 +13,10 @@ It has 3 main stages:
 
 It also has web dashboard which keeps you up to date about what's going on at the server. Built with JWT and WebSocket makes it blazing fast, secure and real-time.
 
+<div style="display: flex; justify-content: center;">
+  <img src="https://github.com/JamesJGoodwin/flaut-anomaly/blob/master/github-dashboard-screenshot.png?raw=true" alt="dashboard screenshot" />
+</div>
+
 ## TODO
 - User management and access rights (upload images, modify users, etc)
 - Refactor typings for websocket data flow
