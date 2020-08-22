@@ -108,6 +108,13 @@ const onMessage = (ev: MessageEvent): void => {
         newEntrySound.play()
 
         store.dispatch(addLatest(message.data.entry))
+
+        sendWebSocketData({
+          type: 'dashboard-statistics',
+          data: {
+            period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
+          }
+        })
       } else if (message.type === 'entry-status-update') {
         store.dispatch(setEntryStatus(message.data))
 
