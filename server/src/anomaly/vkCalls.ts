@@ -29,7 +29,7 @@ class VKError extends Error {
 }
 
 export const getWallUploadServer = async (): Promise<GetWallUploadServerResponse> => {
-  const domain = process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'
+  const domain = process.env.USE_PROXY === 'true' ? process.env.VK_API_PROXY : 'api.vk.com'
   const url = new URL(`https://${domain}/method/photos.getWallUploadServer`)
   //access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=5.103`
   url.searchParams.append('access_token', process.env.VK_TOKEN_PHOTOS)
@@ -54,7 +54,7 @@ export const uploadPhoto = async (base64: string, url: string): Promise<UploadPh
   const form = new FormData()
   form.append('photo', fs.createReadStream(imgPath))
 
-  const URL = process.env.USE_PROXY === 'true' ? url.replace('pu.vk.com', process.env.HTTP_PROXY_DOMAIN) : url
+  const URL = process.env.USE_PROXY === 'true' ? url.replace('pu.vk.com', process.env.VK_PU_PROXY) : url
   const res: UploadPhotoResponse = await got.post(URL, { body: form }).json()
 
   if (res.photo === null || res.photo === `'[]'` || (Array.isArray(res.photo) && res.photo.length === 0)) {
@@ -66,7 +66,7 @@ export const uploadPhoto = async (base64: string, url: string): Promise<UploadPh
 
 export const SaveWallPhoto = async (server: number, photo: string, hash: string): Promise<SaveWallPhotoResponse> => {
   // `photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=5.103`
-  const DOMAIN = process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'
+  const DOMAIN = process.env.USE_PROXY === 'true' ? process.env.VK_API_PROXY : 'api.vk.com'
   const url = new URL(`https://${DOMAIN}/method/photos.saveWallPhoto`)
   
   url.searchParams.append('group_id', process.env.VK_GROUP_ID)
@@ -84,7 +84,7 @@ export const SaveWallPhoto = async (server: number, photo: string, hash: string)
 }
 
 export const wallPost = async (message: string, ownerID: number, id: number): Promise<void> => {
-  const DOMAIN = process.env.USE_PROXY === 'true' ? process.env.HTTP_PROXY_DOMAIN : 'api.vk.com'
+  const DOMAIN = process.env.USE_PROXY === 'true' ? process.env.VK_API_PROXY : 'api.vk.com'
   const url = new URL(`https://${DOMAIN}/method/wall.post`)
 
   url.searchParams.append('owner_id', `-${process.env.VK_GROUP_ID}`)
