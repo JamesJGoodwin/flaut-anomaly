@@ -100,13 +100,6 @@ const onMessage = (ev: MessageEvent): void => {
           } else {
             store.dispatch(addSomeLatests(message.data))
             window.awaitingAdditionalLatests = false
-
-            sendWebSocketData({
-              type: 'dashboard-statistics',
-              data: {
-                period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
-              }
-            })
           }
         } else {
           store.dispatch(setLatest(message.data))
@@ -117,6 +110,13 @@ const onMessage = (ev: MessageEvent): void => {
         store.dispatch(addLatest(message.data.entry))
       } else if (message.type === 'entry-status-update') {
         store.dispatch(setEntryStatus(message.data))
+
+        sendWebSocketData({
+          type: 'dashboard-statistics',
+          data: {
+            period: localStorage.getItem('dashboardStatisticsPeriod') || 'week'
+          }
+        })
       } else if (message.type === 'notification') {
         if (message.data === 'Facebook login failed') {
           showErrorToast(message.data)
