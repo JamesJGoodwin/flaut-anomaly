@@ -244,7 +244,7 @@ declare namespace WS {
 declare global {
   interface Window {
     ws: WebSocket;
-    startWebSocket(): void;
+    startWebSocket(): Promise<void>;
     awaitingUploadNotification: Array<boolean>;
     awaitingDeletionNotification: boolean;
     awaitingAdditionalLatests: boolean;
