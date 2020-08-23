@@ -95,7 +95,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
   }
 })
 
-app.get('/', async (req, res) => {
+app.get('*', async (req, res) => {
   try {
     const resp = await dashboard(pugs.dashboard)
     res.send(resp)

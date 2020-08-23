@@ -2,9 +2,10 @@
  * Core Modules
  */
 
-import React, { Fragment, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { Fragment } from 'react'
+import { useSelector } from 'react-redux'
 import { ToastContainer } from 'react-toastify'
+import { Redirect, Switch, Route, RouteProps } from 'react-router-dom'
 
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -12,56 +13,41 @@ import 'react-toastify/dist/ReactToastify.css'
  * Engine Modules
  */
 
-import { init as initWebSocket, sendWebSocketData } from './websocket'
 import { Authorization as AuthForm } from './components/auth'
-import { Loader } from './components/loader'
 import { Dashboard } from './components/dashboard'
-import { setAuthenticationChecked, stateSelector } from './slices/auth'
+import { stateSelector as authSelector } from './slices/auth'
 
 /**
  * Logic
  */
 
 const App = (): JSX.Element => {
-    const dispatch = useDispatch()
-    const { isAuthChecked, isAuthenticated, isAuthorized } = useSelector(stateSelector)
+  const { isAuthenticated, isAuthorized } = useSelector(authSelector)
 
-    useEffect(() => {
-        initWebSocket() 
-        setTimeout(window.startWebSocket, 100)
-
-        if ('jwt' in localStorage) {
-            const initial = setInterval(() => {
-                if (window.ws.readyState === 1) {
-                    const data = {
-                        type: 'authentication',
-                        data: {
-                            jwt: localStorage.getItem('jwt'),
-                            uuid: localStorage.getItem('uuid')
-                        }
-                    }
-                   
-                    sendWebSocketData(data)
-
-                    clearInterval(initial)
-                }
-            }, 100)
-        } else {
-            dispatch(setAuthenticationChecked())
-        }
-    }, [dispatch])
-
-    return (
-        <Fragment>
-            {!isAuthChecked
-                ? <Loader />
-                : isAuthorized && isAuthenticated
-                    ? <Dashboard />
-                    : <AuthForm />
-            }
-            <ToastContainer />
-        </Fragment>
-    )
+  return (
+    <Fragment>
+      <Switch>
+        <Redirect exact from="/" to="/auth" />
+        <Route path="/auth" component={AuthForm} />
+        <PrivateRoute path="/dashboard" isAuthenticated={isAuthorized && isAuthenticated}>
+          <Dashboard />
+        </PrivateRoute>
+      </Switch>
+      <ToastContainer />
+    </Fragment >
+  )
 }
 
 export default App
+
+function PrivateRoute({ children, isAuthenticated, ...rest }: { children: React.ReactNode, isAuthenticated: boolean } & RouteProps) {
+  return (
+    <Route
+      {...rest}
+      render={({ location }) => isAuthenticated
+        ? children
+        : <Redirect to={{ pathname: '/auth', state: { from: location } }} />
+      }
+    />
+  );
+}

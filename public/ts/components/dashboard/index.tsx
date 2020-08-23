@@ -2,7 +2,7 @@
  * Core Modules
  */
 
-import React, { useEffect, Fragment, useState, useRef } from 'react'
+import React, { useEffect, Fragment, useState, useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -16,6 +16,7 @@ import { faBell, faUser } from '@fortawesome/free-regular-svg-icons'
 import { roundArrow } from 'tippy.js'
 import Tippy from '@tippyjs/react'
 import cx from 'classnames'
+import { useHistory } from 'react-router-dom'
 
 import 'tippy.js/dist/svg-arrow.css'
 import 'tippy.js/themes/light.css'
@@ -39,6 +40,7 @@ const LIST_SIZE = 20
 
 export const Dashboard = (): JSX.Element => {
   const dispatch = useDispatch()
+  const history = useHistory()
   const { latest, notifications, statistics } = useSelector(stateSelector)
 
   const [code, setCode] = useState('')
@@ -104,12 +106,16 @@ export const Dashboard = (): JSX.Element => {
     }
   }, [statsPeriod])
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    
     localStorage.removeItem('jwt')
     localStorage.removeItem('uuid')
 
+    history.push('/')
+
     dispatch(signOut())
-  }
+  }, [dispatch, history])
 
   const getStatsLabel = (type: PossiblePeriods) => {
     if (type === 'day') return 'день'
@@ -181,7 +187,7 @@ export const Dashboard = (): JSX.Element => {
             </Tippy>
           </li>
           <li className="nav-item text-nowrap sign-out">
-            <a className="nav-link" href="#" onClick={() => handleSignOut()}>Выйти</a>
+            <a className="nav-link" href="#" onClick={handleSignOut}>Выйти</a>
           </li>
         </ul>
       </nav>
