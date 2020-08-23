@@ -26,6 +26,7 @@ import { initProcessor } from './anomaly'
 import { init as initWebSocket, notifyClientAboutImageUpload } from './websocket'
 import { checkVKApiAvailability, checkImagesDatabaseIntegrity } from './functions'
 import { checkForStuckHistoricalEntries, saveImageInDB } from './anomaly/db'
+import { getFacebookListener } from './anomaly'
 
 /**
  * Logic
@@ -49,13 +50,8 @@ fs.readdirSync(templatesPath).forEach((file: string): void => {
 
 const app = express()
 
-app.use('/api-proxy', proxy('https://api.vk.com', {
-  proxyReqPathResolver: req => req.originalUrl.replace('/api-proxy/', '')
-}))
-
-app.use('/pu-proxy', proxy('https://pu.vk.com', {
-  proxyReqPathResolver: req => req.originalUrl.replace('/pu-proxy/', '')
-}))
+app.use('/api-proxy', proxy('https://api.vk.com'))
+app.use('/pu-proxy', proxy('https://pu.vk.com'))
 
 app.use('/images', express.static('images'))
 app.use(express.static('public'))
@@ -70,6 +66,14 @@ app.get('/render', async (req, res) => {
     console.error(e)
     res.send(500)
   }
+})
+
+app.get('/test/:t', (req, res) => {
+  const facebookListener = getFacebookListener()
+
+  facebookListener.emit('message', req.params['t'])
+
+  res.send('Accepted!')
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {

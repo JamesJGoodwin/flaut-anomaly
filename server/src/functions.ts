@@ -65,10 +65,16 @@ export async function parseTicketLink(rawLink: string): Promise<{ result: 'succe
 
       while ((tmp2 = citiesRegex.exec(segments[i])) !== null) {
         cities.push(tmp2[0])
-        let cityData: Autocomplete
 
         try {
-          cityData = await got(`https://${process.env.PRICESDATA_DOMAIN}/api/autocomplete?q=${tmp2[0]}`).json()
+          const cityData: Autocomplete[] = await got(`https://${process.env.PRICESDATA_DOMAIN}/api/autocomplete?q=${tmp2[0]}`).json()
+          
+          cityNames.push({
+            name: 'city_name' in cityData[0] ? cityData[0].city_name : cityData[0].name,
+            cityCode: 'city_code' in cityData[0] ? cityData[0].city_code : cityData[0].code,
+            countryCode: cityData[0].country_code,
+            coordinates: cityData[0].coordinates
+          })
         } catch (e) {
           if ('response' in e) {
             console.error(e, e.response.body)
@@ -77,13 +83,6 @@ export async function parseTicketLink(rawLink: string): Promise<{ result: 'succe
           }
           return { result: 'error', data: null }
         }
-
-        cityNames.push({
-          name: 'city_name' in cityData[0] ? cityData[0].city_name : cityData[0].name,
-          cityCode: 'city_code' in cityData[0] ? cityData[0].city_code : cityData[0].code,
-          countryCode: cityData[0].country_code,
-          coordinates: cityData[0].coordinates
-        })
       }
       // Если первый сегмент - запарсить валюту города
       if (i === 0) {

@@ -2,6 +2,7 @@ import pug from 'pug'
 
 export interface Autocomplete {
   code: string;
+  city_code?: string
   type: 'airport' | 'city';
   country_cases: any;
   country_code: string;
@@ -10,8 +11,8 @@ export interface Autocomplete {
   name: string;
   city_name?: string;
   coordinates?: {
-    lon: string;
-    lat: string;
+    lon: number;
+    lat: number;
   };
   country_name: string;
   state_code: string | null;

@@ -47,10 +47,11 @@ export const createVkPost = async (
    * Загрузка фото на сервер VK
    */
 
-  await setEntryStatus(id, 'processing', 'Загрузка фото в VK...')
-
+  await setEntryStatus(id, 'processing', 'Запрос сервера для загрузки изображения в VK...')
   const photoUpload = await getWallUploadServer()
+  await setEntryStatus(id, 'processing', 'Загрузка изображения в VK...')
   const { server, photo, hash } = await uploadPhoto(img, photoUpload.response.upload_url)
+  await setEntryStatus(id, 'processing', 'Сохранение изображения в группе VK...')
   const savedWallPhoto = await SaveWallPhoto(server, photo[0], hash)
   /**
    * Делаем пост на стене группы
