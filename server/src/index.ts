@@ -50,13 +50,8 @@ fs.readdirSync(templatesPath).forEach((file: string): void => {
 
 const app = express()
 
-app.use('/api-proxy', proxy('https://api.vk.com', {
-  proxyReqPathResolver: req => req.originalUrl.replace('/api-proxy/', '')
-}))
-
-app.use('/pu-proxy', proxy('https://pu.vk.com', {
-  proxyReqPathResolver: req => req.originalUrl.replace('/pu-proxy/', '')
-}))
+app.use('/api-proxy', proxy('https://api.vk.com'))
+app.use('/pu-proxy', proxy('https://pu.vk.com'))
 
 app.use('/images', express.static('images'))
 app.use(express.static('public'))
