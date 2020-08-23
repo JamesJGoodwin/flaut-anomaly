@@ -26,6 +26,7 @@ import { initProcessor } from './anomaly'
 import { init as initWebSocket, notifyClientAboutImageUpload } from './websocket'
 import { checkVKApiAvailability, checkImagesDatabaseIntegrity } from './functions'
 import { checkForStuckHistoricalEntries, saveImageInDB } from './anomaly/db'
+import { getFacebookListener } from './anomaly'
 
 /**
  * Logic
@@ -70,6 +71,14 @@ app.get('/render', async (req, res) => {
     console.error(e)
     res.send(500)
   }
+})
+
+app.get('/test/:t', (req, res) => {
+  const facebookListener = getFacebookListener()
+
+  facebookListener.emit('message', req.params['t'])
+
+  res.send('Accepted!')
 })
 
 app.post('/upload', upload.single('image'), async (req, res) => {

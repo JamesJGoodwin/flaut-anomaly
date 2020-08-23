@@ -29,9 +29,11 @@ import { getAnomalyPicture } from './screenshot'
 const POST_PREVENT_MAX_DAYS = parseInt(process.env.POST_PREVENT_MAX_DAYS)
 const POST_PREVENT_MAX_PRICE = parseInt(process.env.POST_PREVENT_MAX_PRICE)
 
-export async function initProcessor(): Promise<void> {
-    const facebookListener = new EventEmitter()
+const facebookListener = new EventEmitter()
 
+export const getFacebookListener = (): EventEmitter => facebookListener
+
+export async function initProcessor(): Promise<void> {
     initFacebookListener(facebookListener)
 
     facebookListener.on('message', async rawStr => {

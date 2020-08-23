@@ -31,16 +31,22 @@ class VKError extends Error {
 export const getWallUploadServer = async (): Promise<GetWallUploadServerResponse> => {
   const domain = process.env.USE_PROXY === 'true' ? process.env.VK_API_PROXY : 'api.vk.com'
   const url = new URL(`https://${domain}/method/photos.getWallUploadServer`)
-  //access_token=${process.env.VK_TOKEN_PHOTOS}&group_id=${process.env.VK_GROUP_ID}&v=5.103`
+
   url.searchParams.append('access_token', process.env.VK_TOKEN_PHOTOS)
   url.searchParams.append('group_id', process.env.VK_GROUP_ID)
   url.searchParams.append('v', '5.103')
 
-  const res: GetWallUploadServerResponse = await got(url.toString()).json()
+  console.log(url.toString())
 
-  if (res.error || !res.response) throw new VKError(JSON.stringify(res))
+  try {
+    const res: GetWallUploadServerResponse = await got(url.toString()).json()
 
-  return res
+    if (res.error || !res.response) throw new VKError(JSON.stringify(res))
+
+    return res
+  } catch (e) {
+    throw new Error(e)
+  }
 }
 
 export const uploadPhoto = async (base64: string, url: string): Promise<UploadPhotoResponse> => {
@@ -68,7 +74,7 @@ export const SaveWallPhoto = async (server: number, photo: string, hash: string)
   // `photo=${uploadedPhotoResponse.photo}&access_token=${process.env.VK_TOKEN_PHOTOS}&v=5.103`
   const DOMAIN = process.env.USE_PROXY === 'true' ? process.env.VK_API_PROXY : 'api.vk.com'
   const url = new URL(`https://${DOMAIN}/method/photos.saveWallPhoto`)
-  
+
   url.searchParams.append('group_id', process.env.VK_GROUP_ID)
   url.searchParams.append('server', server.toString())
   url.searchParams.append('hash', hash)

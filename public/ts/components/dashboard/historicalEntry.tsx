@@ -137,7 +137,7 @@ export function Entry(props: Props): JSX.Element {
   }, [props.entry.createdAt])
 
   return (
-    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength })}>
+    <div className={cx('card', stage, { 'mb-3': props.i + 1 < props.latestLength })} data-t={props.entry.fullInfo.rawStr}>
       <div className="card-header text-muted bg-white">
         {timeFromNow + ' назад'}
       </div>
