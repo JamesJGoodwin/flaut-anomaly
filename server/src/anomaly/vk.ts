@@ -52,7 +52,7 @@ export const createVkPost = async (
   await setEntryStatus(id, 'processing', 'Загрузка изображения в VK...')
   const { server, photo, hash } = await uploadPhoto(img, photoUpload.response.upload_url)
   await setEntryStatus(id, 'processing', 'Сохранение изображения в группе VK...')
-  const savedWallPhoto = await SaveWallPhoto(server, photo[0], hash)
+  const savedWallPhoto = await SaveWallPhoto(server, photo as string, hash)
   /**
    * Делаем пост на стене группы
    */
@@ -67,7 +67,7 @@ export const createVkPost = async (
 
   await setEntryStatus(id, 'processing', 'Создание поста в группе...')
 
-  const postText = encodeURIComponent(text.text + '\n\nЗабронировать: ' + shortened + '\n\n')
+  const postText = text.text + '\n\nЗабронировать: ' + shortened + '\n\n'
   await wallPost(postText, savedWallPhoto.response[0].owner_id, savedWallPhoto.response[0].id)
 
   await redis.set('posted', '', 'EX', 7200)

@@ -36,8 +36,6 @@ export const getWallUploadServer = async (): Promise<GetWallUploadServerResponse
   url.searchParams.append('group_id', process.env.VK_GROUP_ID)
   url.searchParams.append('v', '5.103')
 
-  console.log(url.toString())
-
   try {
     const res: GetWallUploadServerResponse = await got(url.toString()).json()
 
@@ -110,5 +108,9 @@ export const wallPost = async (message: string, ownerID: number, id: number): Pr
   url.searchParams.append('access_token', process.env.VK_TOKEN_STANDALONE)
   url.searchParams.append('v', '5.103')
 
-  await got(url.toString())
+  try {
+    await got(url.toString())
+  } catch (e) {
+    throw new Error(e)
+  }
 }
