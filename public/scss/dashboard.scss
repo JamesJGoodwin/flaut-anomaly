@@ -3,16 +3,9 @@ body {
 }
 
 .sidebar {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
   z-index: 100;
-  margin: 87px 0 20px 20px;
-  background: #fff;
+  margin-top: 87px;
   border-radius: 8px;
-  padding: 10px 20px;
-  border: 1px solid #eee;
 
   .sidebar-sticky {
     position: relative;

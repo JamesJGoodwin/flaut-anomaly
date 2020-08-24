@@ -193,7 +193,7 @@ export const Dashboard = (): JSX.Element => {
       </nav>
       <div className="container-fluid">
         <div className="row">
-          <nav className="col-md-2 d-none d-md-block sidebar">
+          <nav className="col-md-3 col-lg-2 d-none d-md-block sidebar">
             <div className="sidebar-sticky">
               <ul className="nav flex-column">
                 <li className="nav-item --active">
@@ -238,7 +238,7 @@ export const Dashboard = (): JSX.Element => {
               </div>
             </div>
           </nav>
-          <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light">
+          <main role="main" className="col-md-9 col-lg-10 ml-sm-auto px-4 bg-light">
             <div className="pt-3 pb-2 mb-3">
               <div className="container-fluid history-holder pt-4">
                 {latest.map((val, i) =>
