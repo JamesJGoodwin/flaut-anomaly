@@ -46,6 +46,7 @@ export const Dashboard = (): JSX.Element => {
   const [code, setCode] = useState('')
   const [statsPeriod, setStatsPeriod] = useState<PossiblePeriods>(localStorage.getItem('dashboardStatisticsPeriod') as PossiblePeriods || 'week')
   const [periodSelectorVisible, setPeriodSelectorVisible] = useState(false)
+  const [notifyVisible, setNotifyVisible] = useState(false)
 
   const skips = useRef(1)
   const isInitialMount = useRef(true)
@@ -106,9 +107,12 @@ export const Dashboard = (): JSX.Element => {
     }
   }, [statsPeriod])
 
+  const showNotifications = () => setNotifyVisible(true)
+  const hideNotification = () => setNotifyVisible(false)
+
   const handleSignOut = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
-    
+
     localStorage.removeItem('jwt')
     localStorage.removeItem('uuid')
 
@@ -132,6 +136,11 @@ export const Dashboard = (): JSX.Element => {
     localStorage.setItem('dashboardStatisticsPeriod', type)
   }
 
+  const submit2FA = useCallback(() => {
+    sendWebSocketData({ type: 'server-2fa', data: { code } })
+    hideNotification()
+  }, [code])
+
   const typedObjectEntries = Object.entries as <T>(o: T) => [Extract<keyof T, string>, T[keyof T]][]
 
   return (
@@ -141,7 +150,8 @@ export const Dashboard = (): JSX.Element => {
         <ul className="navbar-nav px-3 flex-row align-items-center">
           <li className={cx('nav-item', 'notifications', 'mr-5', { '--animate': notifications.length > 0 })}>
             <Tippy
-              disabled={notifications.length === 0}
+              visible={notifyVisible}
+              onClickOutside={hideNotification}
               trigger="click"
               interactive={true}
               arrow={roundArrow}
@@ -149,39 +159,44 @@ export const Dashboard = (): JSX.Element => {
               offset={[0, 20]}
               onHidden={() => dispatch(clearNotifications())}
               content={
-                <div className="notifications-holder">
-                  {notifications.map(x => {
-                    if (x === '2FA') {
-                      return (
-                        <div className="notification two-fa" key={x}>
-                          <p className="description">Facebook 2FA confirmation required</p>
-                          <form className="form-inline" onSubmit={(e: React.FormEvent) => e.preventDefault()}>
-                            <div className="form-group">
-                              <label htmlFor="facebook-2fa">Enter your code:</label>
-                              <input
-                                autoComplete="off"
-                                type="text"
-                                className="form-control ml-3"
-                                id="facebook-2fa"
-                                placeholder="XXXXXX"
-                                value={code}
-                                onChange={(e: React.ChangeEvent) => setCode((e.target as HTMLInputElement).value)}
-                              />
+                notifications.length > 0
+                  ? (
+                    <div className="notifications-holder">
+                      {notifications.map(x => {
+                        if (x === '2FA') {
+                          return (
+                            <div className="notification two-fa" key={x}>
+                              <p className="description">Необходимо пройти двухфакторную аутентификацию</p>
+                              <form className="form-inline" onSubmit={(e: React.FormEvent) => e.preventDefault()}>
+                                <div className="form-group">
+                                  <label htmlFor="facebook-2fa">Введите код:</label>
+                                  <input
+                                    autoComplete="off"
+                                    type="text"
+                                    className="form-control ml-3"
+                                    id="facebook-2fa"
+                                    placeholder="XXXXXX"
+                                    value={code}
+                                    onChange={(e: React.ChangeEvent) => setCode((e.target as HTMLInputElement).value)}
+                                  />
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="btn btn-primary ml-3"
+                                  onClick={submit2FA}
+                                >Отправить</button>
+                              </form>
                             </div>
-                            <button
-                              type="submit"
-                              className="btn btn-primary ml-3"
-                              onClick={() => sendWebSocketData({ type: 'server-2fa', data: { code } })}
-                            >Submit</button>
-                          </form>
-                        </div>
-                      )
-                    }
-                  })}
-                </div>
+                          )
+                        }
+                      })}
+                    </div>
+                  ) : (
+                    <span className="empty">Когда что-то сломается - тут будут сообщения :)</span>
+                  )
               }
             >
-              <span tabIndex={0}>
+              <span tabIndex={0} onClick={notifyVisible ? hideNotification : showNotifications}>
                 <FontAwesomeIcon icon={notifications.length > 0 ? fasBell : faBell} />
               </span>
             </Tippy>
