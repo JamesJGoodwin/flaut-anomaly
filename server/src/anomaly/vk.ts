@@ -67,7 +67,7 @@ export const createVkPost = async (
 
   await setEntryStatus(id, 'processing', 'Создание поста в группе...')
 
-  const postText = encodeURIComponent(text.text + '\n\nЗабронировать: ' + shortened + '\n\n')
+  const postText = text.text + '\n\nЗабронировать: ' + shortened + '\n\n'
   await wallPost(postText, savedWallPhoto.response[0].owner_id, savedWallPhoto.response[0].id)
 
   await redis.set('posted', '', 'EX', 7200)
