@@ -21,7 +21,7 @@
   "author": "JamesJGoodwin",
   "license": "AGPLv3",
   "devDependencies": {
-    "@babel/core": "^7.11.4",
+    "@babel/core": "^7.11.5",
     "@babel/preset-env": "^7.11.0",
     "@types/bcrypt": "^3.0.0",
     "@types/bootstrap": "^4.5.0",
