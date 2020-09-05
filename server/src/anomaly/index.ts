@@ -85,7 +85,7 @@ export async function initProcessor(): Promise<void> {
         if (avgPrice.result === 'error') {
             return await setEntryStatus(id, 'failed', `Не удалось получить цену от API`)
         } else {
-            if (avgPrice.x > parsed.data.price) {
+            if (parsed.data.price > avgPrice.x) {
                 return await setEntryStatus(id, 'declined', `Скидочная цена превышает среднюю цену по периоду`)
             }
         }
