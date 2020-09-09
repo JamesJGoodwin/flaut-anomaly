@@ -53,7 +53,7 @@ const config: Configuration = {
             loader: 'postcss-loader',
             options: {
               sourceMap: false,
-              config: {
+              postcssOptions: {
                 path: `./postcss.config.js`
               }
             }
@@ -81,7 +81,7 @@ const config: Configuration = {
             loader: 'postcss-loader',
             options: {
               sourceMap: false,
-              config: {
+              postcssOptions: {
                 path: `./postcss.config.js`
               }
             }
