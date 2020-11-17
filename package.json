@@ -107,7 +107,7 @@
     "react-toastify": "^6.0.8",
     "redux": "^4.0.5",
     "regenerator-runtime": "^0.13.7",
-    "sharp": "^0.26.0",
+    "sharp": "^0.26.3",
     "tippy.js": "^6.2.6",
     "ws": "^7.3.0"
   }
