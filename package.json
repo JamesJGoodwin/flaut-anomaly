@@ -79,7 +79,7 @@
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@reduxjs/toolkit": "^1.4.0",
     "@tippyjs/react": "^4.1.0",
-    "bcrypt": "^5.0.0",
+    "bcrypt": "^5.0.1",
     "bootstrap": "^4.5.2",
     "classnames": "^2.2.6",
     "core-js": "^3.6.5",
