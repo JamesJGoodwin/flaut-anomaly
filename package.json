@@ -77,7 +77,7 @@
     "@fortawesome/free-regular-svg-icons": "^5.14.0",
     "@fortawesome/free-solid-svg-icons": "^5.14.0",
     "@fortawesome/react-fontawesome": "^0.1.11",
-    "@reduxjs/toolkit": "^1.4.0",
+    "@reduxjs/toolkit": "^1.6.1",
     "@tippyjs/react": "^4.1.0",
     "bcrypt": "^5.0.0",
     "bootstrap": "^4.5.2",
